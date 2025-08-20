@@ -1,0 +1,13 @@
+---
+description: Apply TayyariAI design system tokens and styles
+globs: src/components/**/*
+alwaysApply: true
+---
+
+- Use `--electric-blue`, `--neon-green`, `--deep-purple` for primary accents
+- Background: `--bg-primary`, ramping to `--bg-secondary` or `--bg-tertiary` in cards
+- Typography scale: `text-base` (16px), heading sizes up to `text-5xl` (48px)
+- Spacing: use `--space-2` (8px) to `--space-16` (64px) for layout
+- Radii: `--radius-sm` (8px) for buttons, `--radius-lg` (16px) for cards
+- Use `.glass-card` style: `--glass-bg`, `--glass-border`, `backdrop-filter: blur(12px)`
+- Apply hover/focus states per `.interactive` rules

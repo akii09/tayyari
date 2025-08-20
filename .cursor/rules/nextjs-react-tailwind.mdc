@@ -1,0 +1,12 @@
+---
+description: Enforce Next.js (App Router), React, and Tailwind CSS best practices
+globs: **/*.tsx,**/*.ts
+alwaysApply: true
+---
+
+- Use Next.js App Router structure (`app/.../page.tsx`)
+- Mark interactive components with `'use client'` only as needed, wrap in `Suspense`
+- Prefer named exports over default exports
+- Use PascalCase for component files and kebab-case for directories
+- Use Tailwind CSS for styling, adhering to our design system tokens
+- Avoid unnecessary state hooks; prefer server components and React Server Actions

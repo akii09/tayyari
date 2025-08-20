@@ -1,0 +1,57 @@
+---
+description: Guide AI for chat interface and feature flows
+globs: src/features/chat/**
+alwaysApply: true
+---
+
+# Chat Interface Guidelines
+
+- The chat interface must include:
+  - A header with AI avatar, session title, and progress indicator (animated bar or pulse)
+  - Quick access options (settings, clear chat, export)
+
+- Message rendering:
+  - AI responses must simulate **real-time typing** (`Typing` animation via CSS keyframes or streaming text)
+  - Inline Monaco Editor must support:
+    - Rich Markdown
+    - Syntax-highlighted code blocks
+    - LaTeX (mathjax)
+    - Mermaid diagrams for flowcharts
+
+- Tools and helpers:
+  - Inline toolbar (`.glass-card`) with:
+    - Markdown buttons (bold, italic, lists, headings)
+    - Quick action chips (Insert Plan, Generate Roadmap, Share Export)
+    - Code toggle (Monaco editor fullscreen mode)
+  - Attachments button for files/images
+
+- Input area:
+  - Single-line expanding input with placeholder hint: *“Type your request…”*
+  - Icons:  
+    - 📎 Attach  
+    - ⚡ Quick Action  
+    - `{ }` Code Toggle  
+    - ➤ Submit (electric-blue accent, glowing hover)
+
+- Visual Style:
+  - Base design system from global tokens:
+    - Electric Blue `#0066FF` → primary accent for CTAs
+    - Neon Green `#00FF88` → highlight for AI “thinking”
+    - Deep Purple `#6366F1` → progress indicators
+  - Responses inside **glass morphic cards** (`.glass-card`) with subtle shadows
+  - Smooth fade-in for messages, and **typing dots animation** (`•••` pulsing)
+
+# UX Micro-Interactions
+
+- Onboarding:
+  - First launch shows step-by-step *interactive hints* with quick dismiss
+  - “Start Now” button glows with pulse animation
+  - Tooltips guide to code editor, quick actions, and progress tracker
+
+- Feedback:
+  - Every AI reply ends with small “👍 / 👎 / Copy” options
+  - Roadmap progress auto-updates in sidebar card
+
+- State Persistence:
+  - Each chat session saves state into `workflow_state.md`
+  - AI must continue context (roadmap, plan, chat) when re-opened

@@ -1,26 +1,175 @@
 @import "tailwindcss";
 
+/* Design tokens */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Primary */
+  --electric-blue: #0066FF;
+  --neon-green: #00FF88;
+  --deep-purple: #6366F1;
+
+  /* Neutrals */
+  --bg-primary: #0A0A0B;
+  --bg-secondary: #161618;
+  --bg-tertiary: #242428;
+
+  --text-primary: #FFFFFF;
+  --text-secondary: #A1A1AA;
+  --text-muted: #71717A;
+
+  /* Accents */
+  --success: #10B981;
+  --warning: #F59E0B;
+  --error: #EF4444;
+  --info: #3B82F6;
+
+  /* Glass */
+  --glass-bg: rgba(22, 22, 24, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.1);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--bg-primary);
+  --color-foreground: var(--text-primary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Utility tokens */
+  --color-electric-blue: var(--electric-blue);
+  --color-neon-green: var(--neon-green);
+  --color-deep-purple: var(--deep-purple);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Base styles */
+html, body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
+
+/* Prose styling for markdown */
+.prose {
+  --tw-prose-body: var(--text-primary);
+  --tw-prose-headings: #fff;
+  --tw-prose-links: var(--electric-blue);
+  --tw-prose-pre-bg: var(--bg-tertiary);
+}
+.prose pre {
+  position: relative;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+}
+.code-toolbar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 8px;
+}
+.code-toolbar button {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--glass-border);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.code-toolbar .lang {
+  font-size: 11px;
+  color: var(--text-secondary);
+  padding: 4px 6px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+}
+
+/* Code block line numbers and collapse */
+.code-block pre code.code-lines .line {
+  display: block;
+  padding-left: 3rem;
+  position: relative;
+}
+.code-block pre code.code-lines .line::before {
+  content: counter(line);
+  counter-increment: line;
+  position: absolute;
+  left: 0.75rem;
+  color: var(--text-muted);
+}
+.code-block pre code.code-lines {
+  counter-reset: line;
+}
+.code-block.collapsed pre {
+  max-height: 320px;
+  overflow: hidden;
+}
+.code-block.collapsed::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 64px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,0.8));
+  pointer-events: none;
+}
+.code-toggle {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--glass-border);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+/* KaTeX support */
+@import "katex/dist/katex.min.css" layer(katex);
+
+/* Glass morphism card */
+.glass-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Gradients */
+.gradient-primary {
+  background: linear-gradient(135deg, var(--electric-blue), var(--deep-purple));
+}
+
+.gradient-success {
+  background: linear-gradient(135deg, var(--neon-green), var(--success));
+}
+
+/* Interactive states */
+.interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(0, 102, 255, 0.15);
+  transition: all 0.2s ease;
+}
+
+.interactive:focus {
+  outline: 2px solid var(--electric-blue);
+  outline-offset: 2px;
+}
+
+/* Animations */
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 0 0 rgba(0, 102, 255, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(0, 102, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 102, 255, 0); }
+}
+
+@keyframes typing {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.typing-dots span {
+  animation: typing 1s infinite;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
