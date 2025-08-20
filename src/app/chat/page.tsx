@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { ChatMessage } from "@/components/chat/ChatMessage";
+import { FloatingActions } from "@/components/shell/FloatingActions";
 
 interface Message {
   id: string;
@@ -140,7 +141,7 @@ export default function ChatPage() {
   const isCurrentlyStreaming = messages.some(msg => msg.isStreaming);
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="flex flex-col min-h-screen pl-20 sm:pl-24">
       {/* Messages */}
       <div 
         ref={messagesContainerRef}
@@ -197,6 +198,14 @@ export default function ChatPage() {
       <ChatInput
         onSendMessage={handleSendMessage}
         isLoading={isLoading}
+      />
+
+      {/* Floating Actions */}
+      <FloatingActions
+        progress={85}
+        onClear={handleClearChat}
+        onExport={handleExportChat}
+        onSettings={() => console.log('Settings clicked')}
       />
     </div>
   );

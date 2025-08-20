@@ -33,7 +33,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[var(--bg-primary)] text-[var(--text-primary)]`}>
         <div className="min-h-screen flex flex-col">
           <HeaderDock />
-          <main className="flex-1 pt-20 sm:pt-24">{children}</main>
+          <main className="flex-1">{children}</main>
           <footer className="border-t border-white/5 text-center text-xs text-[var(--text-secondary)] py-4">© {new Date().getFullYear()} TayyariAI</footer>
         </div>
       </body>

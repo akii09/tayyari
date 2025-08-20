@@ -99,17 +99,21 @@ function processMarkdown(text: string): string {
   return text
     // Code blocks with syntax highlighting
     .replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
-      return `<div class="code-block relative bg-bg-tertiary rounded-lg border border-glass-border p-4 my-4">
-        <div class="code-toolbar">
-          ${lang ? `<span class="lang text-xs text-text-muted">${lang}</span>` : ''}
-          <button class="copy-btn p-1 hover:bg-white/10 rounded" onclick="navigator.clipboard.writeText('${escapeForJs(code.trim())}')">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      return `<div style="position: relative; background: #0f0f0f; border-radius: 12px; border: 1px solid #333; margin: 16px 0; overflow: hidden;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #1a1a1a; border-bottom: 1px solid #333;">
+          <span style="font-size: 12px; color: #888; font-family: monospace;">${lang || 'code'}</span>
+          <button style="padding: 6px; background: transparent; border: none; border-radius: 6px; color: #888; cursor: pointer; transition: all 0.2s;" 
+                  onmouseover="this.style.background='#333'; this.style.color='#ccc';" 
+                  onmouseout="this.style.background='transparent'; this.style.color='#888';"
+                  onclick="navigator.clipboard.writeText('${escapeForJs(code.trim())}'); this.style.color='#0066FF'; setTimeout(() => this.style.color='#888', 1000);" 
+                  title="Copy code">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
             </svg>
           </button>
         </div>
-        <pre class="text-sm overflow-x-auto"><code class="language-${lang || 'text'}">${escapeHtml(code.trim())}</code></pre>
+        <pre style="padding: 16px; margin: 0; font-size: 14px; overflow-x: auto; color: #e5e5e5; background: #0f0f0f; font-family: 'Monaco', 'Consolas', monospace; line-height: 1.5;"><code>${escapeHtml(code.trim())}</code></pre>
       </div>`;
     })
     // Headers
@@ -130,7 +134,7 @@ function processMarkdown(text: string): string {
       }
     })
     // Inline code
-    .replace(/`([^`]+)`/g, '<code class="bg-bg-tertiary px-1.5 py-0.5 rounded text-sm font-mono text-electric-blue">$1</code>')
+    .replace(/`([^`]+)`/g, '<code style="background: #1a1a1a; padding: 4px 8px; border-radius: 6px; font-size: 13px; font-family: monospace; color: #0066FF; border: 1px solid #333;">$1</code>')
     // Line breaks for double newlines (paragraphs)
     .replace(/\n\n/g, '</p><p class="mb-3">')
     // Wrap in paragraph tags
