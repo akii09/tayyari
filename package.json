@@ -10,23 +10,24 @@
     "format": "biome format --write"
   },
   "dependencies": {
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "next": "15.5.0",
+    "@monaco-editor/react": "^4.7.0",
+    "highlight.js": "^11.9.0",
+    "katex": "^0.16.11",
     "markdown-it": "^14.1.0",
     "markdown-it-katex": "^2.0.3",
-    "katex": "^0.16.11",
-    "mermaid": "^10.9.1",
     "markdown-it-link-attributes": "^4.0.1",
-    "highlight.js": "^11.9.0"
+    "mermaid": "^10.9.1",
+    "next": "15.5.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@biomejs/biome": "2.2.0",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
     "tailwindcss": "^4",
-    "@biomejs/biome": "2.2.0"
+    "typescript": "^5"
   }
 }

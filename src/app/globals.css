@@ -37,6 +37,12 @@
   --color-electric-blue: var(--electric-blue);
   --color-neon-green: var(--neon-green);
   --color-deep-purple: var(--deep-purple);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
 }
 
 /* Base styles */
