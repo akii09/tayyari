@@ -26,7 +26,7 @@ export function DropdownSelect({ value, onChange, options, placeholder }: Props)
         <span>▾</span>
       </button>
       {open && (
-        <div className="absolute z-20 mt-2 w-full rounded-lg border border-white/10 bg-[var(--bg-secondary)] py-2 shadow-lg">
+        <div className="absolute z-50 mt-2 w-full rounded-lg border border-white/10 bg-[var(--bg-secondary)] py-2 shadow-lg">
           {options.map((o) => (
             <button
               key={o.value}

@@ -57,16 +57,22 @@ export function StreamingMarkdown({ content, speedMs = 8 }: Props) {
 
   useEffect(() => {
     setShown("");
-    let idx = 0;
+    
+    // Use word-based streaming for smoother animation
+    const words = content.split(' ');
+    let currentWord = 0;
+    
     const id = setInterval(() => {
-      idx += 2;
-      if (idx >= content.length) {
+      if (currentWord >= words.length) {
         setShown(content);
         clearInterval(id);
       } else {
-        setShown(content.slice(0, idx));
+        const partial = words.slice(0, currentWord + 1).join(' ') + (currentWord < words.length - 1 ? ' ' : '');
+        setShown(partial);
+        currentWord++;
       }
-    }, speedMs);
+    }, speedMs * 3); // Slower for less flickering
+    
     return () => clearInterval(id);
   }, [content, speedMs]);
 

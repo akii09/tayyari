@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 
 type Props = {
   value?: Date | null;
@@ -10,12 +10,25 @@ type Props = {
 export function DateSelect({ value: controlledValue, onChange }: Props) {
   const [open, setOpen] = useState(false);
   const [uncontrolled, setUncontrolled] = useState<Date | null>(null);
+  const [dropDirection, setDropDirection] = useState<'down' | 'up'>('down');
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const value = controlledValue ?? uncontrolled;
   const label = value ? value.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "Pick a date";
+
+  useEffect(() => {
+    if (open && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      // If less than 300px space below, open upward
+      setDropDirection(spaceBelow < 300 && spaceAbove > 300 ? 'up' : 'down');
+    }
+  }, [open]);
 
   return (
     <div className="mt-2 relative">
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between bg-transparent border border-white/10 rounded-md px-3 py-2 text-left hover:border-white/20"
@@ -24,7 +37,9 @@ export function DateSelect({ value: controlledValue, onChange }: Props) {
         <span>▾</span>
       </button>
       {open && (
-        <div className="absolute z-20 mt-2 w-full rounded-lg border border-white/10 bg-[var(--bg-secondary)] p-3 shadow-lg">
+        <div className={`absolute z-50 w-full rounded-lg border border-white/10 bg-[var(--bg-secondary)] p-3 shadow-xl ${
+          dropDirection === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'
+        }`}>
           <Calendar
             value={value}
             onPick={(date) => {
