@@ -33,7 +33,79 @@ const initialMessages: Message[] = [
   { 
     id: "m3", 
     role: "assistant", 
-    content: "Absolutely! React optimization is crucial for performance. Here are the key strategies:\n\n**1. Memoization**\n- Use `React.memo()` for components\n- Use `useMemo()` for expensive calculations\n- Use `useCallback()` for function references\n\n**2. Code Splitting**\n```javascript\nconst LazyComponent = React.lazy(() => import('./Component'));\n```\n\n**3. Avoid Unnecessary Re-renders**\n- Move state down\n- Split components\n- Use proper dependency arrays\n\nWould you like me to dive deeper into any of these techniques?",
+    content: `Absolutely! React optimization is crucial for performance. Here are the key strategies:
+
+## 1. Memoization Techniques
+
+### Component Memoization
+- Use \`React.memo()\` for components to prevent unnecessary re-renders
+- Use \`useMemo()\` for expensive calculations  
+- Use \`useCallback()\` for function references
+
+\`\`\`typescript
+const OptimizedComponent = React.memo(({ data }) => {
+  const expensiveValue = useMemo(() => {
+    return data.reduce((acc, item) => acc + item.value, 0);
+  }, [data]);
+
+  return <div>{expensiveValue}</div>;
+});
+\`\`\`
+
+## 2. Code Splitting
+
+### Dynamic Imports
+\`\`\`javascript
+const LazyComponent = React.lazy(() => import('./Component'));
+
+function App() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LazyComponent />
+    </Suspense>
+  );
+}
+\`\`\`
+
+## 3. State Management Best Practices
+
+> **Important**: Keep state as close as possible to where it's used
+
+| Strategy | Use Case | Performance Impact |
+|----------|----------|-------------------|
+| Local State | Component-specific data | ✅ High |
+| Context | Shared app state | ⚠️ Medium |
+| External Store | Complex state logic | ✅ High |
+
+### Example: State Optimization
+\`\`\`tsx
+// ❌ Bad: All components re-render when count changes
+function BadExample() {
+  const [count, setCount] = useState(0);
+  const [user, setUser] = useState(null);
+  
+  return (
+    <div>
+      <ExpensiveComponent user={user} />
+      <Counter count={count} setCount={setCount} />
+    </div>
+  );
+}
+
+// ✅ Good: Separate concerns
+function GoodExample() {
+  const [user, setUser] = useState(null);
+  
+  return (
+    <div>
+      <ExpensiveComponent user={user} />
+      <CounterWrapper />
+    </div>
+  );
+}
+\`\`\`
+
+Would you like me to dive deeper into any of these techniques?`,
     timestamp: new Date(baseTime.getTime() - 2 * 60 * 1000) // 2 minutes before base
   },
 ];

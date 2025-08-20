@@ -179,3 +179,94 @@ body {
 }
 .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
 .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+/* Enhanced Markdown Styling */
+.prose {
+  color: #e5e5e5;
+  max-width: none;
+}
+
+.prose strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.prose code {
+  color: #93c5fd;
+  font-size: 0.875em;
+}
+
+.prose pre {
+  background-color: #111827;
+  color: #e5e5e5;
+  border-radius: 8px;
+  border: 1px solid #374151;
+  margin: 1rem 0;
+}
+
+.prose pre code {
+  background-color: transparent;
+  color: inherit;
+  font-size: 0.875em;
+  font-weight: 400;
+}
+
+.prose blockquote {
+  border-left: 4px solid var(--electric-blue);
+  background: rgba(255, 255, 255, 0.05);
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: 0 8px 8px 0;
+}
+
+.prose table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.prose th,
+.prose td {
+  border: 1px solid #374151;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.prose th {
+  background-color: #1f2937;
+  font-weight: 600;
+}
+
+/* Custom scrollbar for code blocks */
+.prose pre::-webkit-scrollbar {
+  height: 8px;
+}
+
+.prose pre::-webkit-scrollbar-track {
+  background: #1f2937;
+  border-radius: 4px;
+}
+
+.prose pre::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 4px;
+}
+
+.prose pre::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Syntax highlighting enhancements */
+.hljs {
+  background: #0f1419 !important;
+  color: #e6e1dc !important;
+}
+
+/* Math expressions (if using KaTeX) */
+.prose .katex {
+  font-size: 1em;
+}
+
+.prose .katex-display {
+  margin: 1rem 0;
+}

@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
-    "highlight.js": "^11.9.0",
+    "highlight.js": "^11.11.1",
     "katex": "^0.16.11",
     "markdown-it": "^14.1.0",
     "markdown-it-katex": "^2.0.3",
@@ -19,7 +19,12 @@
     "mermaid": "^10.9.1",
     "next": "15.5.0",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "react-markdown": "^10.1.0",
+    "react-syntax-highlighter": "^15.6.1",
+    "rehype-highlight": "^7.0.2",
+    "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
