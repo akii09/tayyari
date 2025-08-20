@@ -231,17 +231,30 @@ export default function ChatPage() {
               </p>
             </div>
           ) : (
-            messages.map((message) => (
-              <ChatMessage
+            messages.map((message, index) => (
+              <div
                 key={message.id}
-                role={message.role}
-                content={message.content}
-                isStreaming={message.isStreaming}
-                files={message.files}
-                timestamp={message.timestamp}
-                onCopy={handleCopyMessage}
-                onFeedback={handleFeedback}
-              />
+                className="animate-message-appear"
+                style={{ 
+                  animationDelay: `${index * 100}ms`,
+                  animationFillMode: 'both'
+                }}
+              >
+                <ChatMessage
+                  role={message.role}
+                  content={message.content}
+                  isStreaming={message.isStreaming}
+                  files={message.files}
+                  timestamp={message.timestamp}
+                  onCopy={handleCopyMessage}
+                  onFeedback={handleFeedback}
+                  onEdit={() => console.log(`Edit message ${message.id}`)}
+                  onShare={() => console.log(`Share message ${message.id}`)}
+                  onReact={() => console.log(`React to message ${message.id}`)}
+                  onBookmark={() => console.log(`Bookmark message ${message.id}`)}
+                  onReply={() => console.log(`Reply to message ${message.id}`)}
+                />
+              </div>
             ))
           )}
           

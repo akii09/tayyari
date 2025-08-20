@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { StreamingMessage } from "./StreamingMessage";
+import { MessageActions } from "@/components/ui/MessageActions";
 
 interface MessageProps {
   role: "assistant" | "user";
@@ -10,6 +11,11 @@ interface MessageProps {
   timestamp?: Date;
   onCopy?: (content: string) => void;
   onFeedback?: (type: 'positive' | 'negative') => void;
+  onEdit?: () => void;
+  onShare?: () => void;
+  onReact?: () => void;
+  onBookmark?: () => void;
+  onReply?: () => void;
 }
 
 export function ChatMessage({ 
@@ -19,9 +25,15 @@ export function ChatMessage({
   files = [],
   timestamp,
   onCopy,
-  onFeedback 
+  onFeedback,
+  onEdit,
+  onShare,
+  onReact,
+  onBookmark,
+  onReply
 }: MessageProps) {
   const isUser = role === "user";
+  const [isHovered, setIsHovered] = useState(false);
   
   // Prevent hydration mismatch by only showing time after client hydration
   const [isClient, setIsClient] = useState(false);
@@ -35,7 +47,16 @@ export function ChatMessage({
     '';
 
   return (
-    <article className={`p-4 sm:p-6 ${!isUser ? "glass-card" : ""}`}>
+    <article 
+      className={`
+        group relative p-4 sm:p-6 transition-all duration-300 ease-out
+        hover:bg-bg-secondary/30 
+        ${!isUser ? "glass-card hover:shadow-lg hover:shadow-electric-blue/5" : ""}
+        animate-slide-in-fade
+      `}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <div className="flex items-start gap-3 sm:gap-4">
         {/* Avatar */}
         {isUser ? (
@@ -122,6 +143,18 @@ export function ChatMessage({
           )}
         </div>
       </div>
+
+      {/* Enhanced Message Actions */}
+      <MessageActions
+        isVisible={isHovered && !isStreaming}
+        isUser={isUser}
+        onCopy={() => onCopy?.(content)}
+        onEdit={onEdit}
+        onShare={onShare}
+        onReact={onReact}
+        onBookmark={onBookmark}
+        onReply={onReply}
+      />
     </article>
   );
 }

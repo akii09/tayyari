@@ -55,6 +55,132 @@ body {
   color: var(--text-primary);
 }
 
+/* Enhanced Message Animations */
+@keyframes slide-in-fade {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes message-appear {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(0, 102, 255, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 102, 255, 0.4), 0 0 30px rgba(0, 102, 255, 0.1);
+  }
+}
+
+@keyframes elastic-bounce {
+  0% { transform: scale(1); }
+  20% { transform: scale(1.1); }
+  40% { transform: scale(0.95); }
+  60% { transform: scale(1.05); }
+  80% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+
+@keyframes typing-dots {
+  0%, 60%, 100% {
+    transform: initial;
+  }
+  30% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes stagger-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-fade {
+  animation: slide-in-fade 0.5s ease-out;
+}
+
+.animate-message-appear {
+  animation: message-appear 0.3s ease-out;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-elastic-bounce {
+  animation: elastic-bounce 0.6s ease-out;
+}
+
+.animate-stagger-fade-in {
+  animation: stagger-fade-in 0.3s ease-out;
+}
+
+.typing-dots span:nth-child(1) {
+  animation: typing-dots 1.4s infinite ease-in-out;
+  animation-delay: 0s;
+}
+
+.typing-dots span:nth-child(2) {
+  animation: typing-dots 1.4s infinite ease-in-out;
+  animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+  animation: typing-dots 1.4s infinite ease-in-out;
+  animation-delay: 0.4s;
+}
+
+/* Glass Card Enhancements */
+.glass-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+/* Interactive Elements */
+.interactive {
+  transition: all 0.2s ease;
+}
+
+.interactive:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.interactive:active {
+  transform: translateY(0px);
+  transition: all 0.1s ease;
+}
+
 /* Prose styling for markdown */
 .prose {
   --tw-prose-body: var(--text-primary);
