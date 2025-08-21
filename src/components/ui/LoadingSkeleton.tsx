@@ -14,21 +14,17 @@ export function LoadingSkeleton({
   
   if (variant === 'message') {
     return (
-      <div className={`animate-pulse ${className}`}>
+      <div className={`animate-pulse glass-card ${className}`}>
         <div className="flex items-start gap-3 sm:gap-4 p-4 sm:p-6">
           {/* Avatar skeleton */}
-          <div className="h-8 w-8 rounded-full bg-bg-secondary animate-pulse" 
-               style={{ animationDelay: '0ms' }} />
+          <div className="h-8 w-8 rounded-full bg-bg-tertiary animate-pulse" />
           
           <div className="flex-1 min-w-0 space-y-3">
             {/* Header skeleton */}
             <div className="flex items-center gap-2">
-              <div className="h-3 w-16 bg-bg-secondary rounded animate-pulse" 
-                   style={{ animationDelay: '100ms' }} />
-              <div className="h-2 w-2 bg-bg-secondary rounded-full animate-pulse" 
-                   style={{ animationDelay: '150ms' }} />
-              <div className="h-3 w-12 bg-bg-secondary rounded animate-pulse" 
-                   style={{ animationDelay: '200ms' }} />
+              <div className="h-3 w-16 bg-bg-tertiary rounded animate-pulse" />
+              <div className="h-2 w-2 bg-bg-tertiary rounded-full animate-pulse" />
+              <div className="h-3 w-12 bg-bg-tertiary rounded animate-pulse" />
             </div>
             
             {/* Content skeleton */}
@@ -36,10 +32,9 @@ export function LoadingSkeleton({
               {Array.from({ length: lines }).map((_, i) => (
                 <div 
                   key={i}
-                  className="h-4 bg-bg-secondary rounded animate-pulse"
+                  className="h-4 bg-bg-tertiary rounded animate-pulse"
                   style={{ 
-                    width: i === lines - 1 ? '60%' : '100%',
-                    animationDelay: `${300 + i * 100}ms`
+                    width: i === lines - 1 ? '60%' : '100%'
                   }}
                 />
               ))}

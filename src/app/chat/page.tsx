@@ -1,9 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import { FloatingActions } from "@/components/shell/FloatingActions";
+import { CommandPalette, defaultCommands } from "@/components/ui/CommandPalette";
+
+import { useScreenReaderAnnouncement, useFocusManagement } from "@/components/ui/AccessibilityEnhancer";
+import { useFeatureDetection } from "@/components/ui/ProgressiveEnhancement";
+import { useErrorHandler } from "@/components/ui/ErrorBoundary";
+import { useNotifications, notificationUtils } from "@/components/ui/NotificationSystem";
+import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
 
 interface Message {
   id: string;
@@ -114,8 +121,17 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [isLoading, setIsLoading] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Enhanced hooks
+  const { announce } = useScreenReaderAnnouncement();
+  const { focusElement } = useFocusManagement();
+  const featureDetection = useFeatureDetection();
+  const { handleError } = useErrorHandler();
+  const { showNotification } = useNotifications();
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -144,44 +160,79 @@ export default function ChatPage() {
   };
 
   const handleSendMessage = async (content: string, files?: File[], code?: string) => {
-    // Add user message
-    const userMessage: Message = {
-      id: `msg-${Date.now()}-user`,
-      role: "user",
-      content,
-      timestamp: new Date(),
-      files,
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setIsLoading(true);
-    
-    // Auto-scroll to bottom when user sends a message
-    setIsAtBottom(true);
-
-    // Simulate AI response with streaming
-    setTimeout(() => {
-      const aiMessage: Message = {
-        id: `msg-${Date.now()}-ai`,
-        role: "assistant",
-        content: generateMockResponse(content),
+    try {
+      // Add user message
+      const userMessage: Message = {
+        id: `msg-${Date.now()}-user`,
+        role: "user",
+        content,
         timestamp: new Date(),
-        isStreaming: true,
+        files,
       };
 
-      setMessages(prev => [...prev, aiMessage]);
-      setIsLoading(false);
+      setMessages(prev => [...prev, userMessage]);
+      setIsLoading(true);
+      announce("Message sent", "polite");
+      
+      // Auto-scroll to bottom when user sends a message
+      setIsAtBottom(true);
 
-      // Stop streaming after a delay
+
+
+      // Simulate AI response with streaming
       setTimeout(() => {
-        setMessages(prev => 
-          prev.map(msg => 
-            msg.id === aiMessage.id ? { ...msg, isStreaming: false } : msg
-          )
-        );
-      }, 3000);
-    }, 1000);
+        const aiMessage: Message = {
+          id: `msg-${Date.now()}-ai`,
+          role: "assistant",
+          content: generateMockResponse(content),
+          timestamp: new Date(),
+          isStreaming: true,
+        };
+
+        setMessages(prev => [...prev, aiMessage]);
+        setIsLoading(false);
+        announce("AI is responding", "polite");
+
+        // Stop streaming after a delay
+        setTimeout(() => {
+          setMessages(prev => 
+            prev.map(msg => 
+              msg.id === aiMessage.id ? { ...msg, isStreaming: false } : msg
+            )
+          );
+          announce("AI response complete", "polite");
+        }, 3000);
+      }, 1000);
+
+    } catch (error) {
+      setIsLoading(false);
+      setHasError(true);
+      handleError(error as Error, "sending message");
+      
+      showNotification(notificationUtils.error(
+        "Failed to send message",
+        "Please check your connection and try again",
+        [{
+          label: "Retry",
+          action: () => handleSendMessage(content, files, code),
+          style: "primary"
+        }]
+      ));
+    }
   };
+
+  // Command palette keyboard shortcut
+  const handleGlobalKeyDown = useCallback((e: KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      setIsCommandPaletteOpen(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleGlobalKeyDown);
+    return () => document.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [handleGlobalKeyDown]);
 
   const handleClearChat = () => {
     setMessages([]);
@@ -210,6 +261,52 @@ export default function ChatPage() {
     // Implement feedback handling
   };
 
+
+
+  // Enhanced message action handlers - simplified without toast spam
+  const handleEditMessage = (messageId: string) => {
+    console.log(`Edit message ${messageId}`);
+  };
+
+  const handleShareMessage = (messageId: string) => {
+    const message = messages.find(m => m.id === messageId);
+    if (message) {
+      navigator.clipboard.writeText(message.content);
+    }
+  };
+
+  const handleReactToMessage = (messageId: string) => {
+    console.log(`React to message ${messageId}`);
+  };
+
+  const handleBookmarkMessage = (messageId: string) => {
+    console.log(`Bookmark message ${messageId}`);
+  };
+
+  const handleReplyToMessage = (messageId: string) => {
+    console.log(`Reply to message ${messageId}`);
+  };
+
+  // Enhanced commands with actual functionality
+  const enhancedCommands = defaultCommands.map(cmd => ({
+    ...cmd,
+    action: () => {
+      switch (cmd.id) {
+        case 'clear-chat':
+          handleClearChat();
+          break;
+        case 'export-chat':
+          handleExportChat();
+          break;
+        case 'new-chat':
+          setMessages([]);
+          break;
+        default:
+          cmd.action();
+      }
+    }
+  }));
+
   const isCurrentlyStreaming = messages.some(msg => msg.isStreaming);
 
   return (
@@ -234,9 +331,9 @@ export default function ChatPage() {
             messages.map((message, index) => (
               <div
                 key={message.id}
-                className="animate-message-appear"
+                className={featureDetection.shouldUseAnimations() ? "animate-message-appear" : ""}
                 style={{ 
-                  animationDelay: `${index * 100}ms`,
+                  animationDelay: featureDetection.shouldUseAnimations() ? `${index * 100}ms` : '0ms',
                   animationFillMode: 'both'
                 }}
               >
@@ -248,14 +345,21 @@ export default function ChatPage() {
                   timestamp={message.timestamp}
                   onCopy={handleCopyMessage}
                   onFeedback={handleFeedback}
-                  onEdit={() => console.log(`Edit message ${message.id}`)}
-                  onShare={() => console.log(`Share message ${message.id}`)}
-                  onReact={() => console.log(`React to message ${message.id}`)}
-                  onBookmark={() => console.log(`Bookmark message ${message.id}`)}
-                  onReply={() => console.log(`Reply to message ${message.id}`)}
+                  onEdit={() => handleEditMessage(message.id)}
+                  onShare={() => handleShareMessage(message.id)}
+                  onReact={() => handleReactToMessage(message.id)}
+                  onBookmark={() => handleBookmarkMessage(message.id)}
+                  onReply={() => handleReplyToMessage(message.id)}
                 />
               </div>
             ))
+          )}
+
+          {/* Enhanced Loading State */}
+          {isLoading && (
+            <div className="animate-message-appear">
+              <LoadingSkeleton variant="message" lines={3} />
+            </div>
           )}
           
           {/* Scroll anchor */}
@@ -292,9 +396,20 @@ export default function ChatPage() {
         onExport={handleExportChat}
         onSettings={() => console.log('Settings clicked')}
       />
+
+      {/* Command Palette */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        commands={enhancedCommands}
+      />
+
+
     </div>
   );
 }
+
+
 
 function generateMockResponse(userInput: string): string {
   const responses = [

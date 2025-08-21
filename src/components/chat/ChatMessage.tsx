@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { StreamingMessage } from "./StreamingMessage";
-import { MessageActions } from "@/components/ui/MessageActions";
 
 interface MessageProps {
   role: "assistant" | "user";
@@ -33,7 +32,6 @@ export function ChatMessage({
   onReply
 }: MessageProps) {
   const isUser = role === "user";
-  const [isHovered, setIsHovered] = useState(false);
   
   // Prevent hydration mismatch by only showing time after client hydration
   const [isClient, setIsClient] = useState(false);
@@ -54,8 +52,6 @@ export function ChatMessage({
         ${!isUser ? "glass-card hover:shadow-lg hover:shadow-electric-blue/5" : ""}
         animate-slide-in-fade
       `}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       <div className="flex items-start gap-3 sm:gap-4">
         {/* Avatar */}
@@ -143,18 +139,6 @@ export function ChatMessage({
           )}
         </div>
       </div>
-
-      {/* Enhanced Message Actions */}
-      <MessageActions
-        isVisible={isHovered && !isStreaming}
-        isUser={isUser}
-        onCopy={() => onCopy?.(content)}
-        onEdit={onEdit}
-        onShare={onShare}
-        onReact={onReact}
-        onBookmark={onBookmark}
-        onReply={onReply}
-      />
     </article>
   );
 }

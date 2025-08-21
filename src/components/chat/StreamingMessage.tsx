@@ -54,35 +54,35 @@ export function StreamingMessage({
         )}
       </div>
 
-      {/* Action buttons */}
+      {/* Action buttons - Improved UI */}
       {!isStreaming && displayedContent && (
-        <div className="flex items-center gap-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-2 mt-4 opacity-0 group-hover:opacity-100 transition-all duration-200">
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1 px-2 py-1 text-xs text-text-muted hover:text-text-secondary glass-card rounded transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-text-muted hover:text-text-primary bg-bg-secondary/50 hover:bg-bg-secondary border border-white/5 hover:border-white/10 rounded-lg transition-all duration-200 hover:scale-105"
             title="Copy to clipboard"
           >
-            <CopyIcon size={12} />
-            Copy
+            <CopyIcon size={14} />
+            <span>Copy</span>
           </button>
           
           {onFeedback && (
-            <>
+            <div className="flex items-center gap-1 ml-2">
               <button
                 onClick={() => onFeedback('positive')}
-                className="flex items-center gap-1 px-2 py-1 text-xs text-text-muted hover:text-green-400 glass-card rounded transition-colors"
+                className="flex items-center justify-center w-8 h-8 text-text-muted hover:text-green-400 bg-bg-secondary/50 hover:bg-green-500/10 border border-white/5 hover:border-green-500/20 rounded-lg transition-all duration-200 hover:scale-105"
                 title="Good response"
               >
-                <ThumbsUpIcon size={12} />
+                <ThumbsUpIcon size={14} />
               </button>
               <button
                 onClick={() => onFeedback('negative')}
-                className="flex items-center gap-1 px-2 py-1 text-xs text-text-muted hover:text-red-400 glass-card rounded transition-colors"
+                className="flex items-center justify-center w-8 h-8 text-text-muted hover:text-red-400 bg-bg-secondary/50 hover:bg-red-500/10 border border-white/5 hover:border-red-500/20 rounded-lg transition-all duration-200 hover:scale-105"
                 title="Poor response"
               >
-                <ThumbsDownIcon size={12} />
+                <ThumbsDownIcon size={14} />
               </button>
-            </>
+            </div>
           )}
         </div>
       )}

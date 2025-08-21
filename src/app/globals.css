@@ -7,14 +7,16 @@
   --neon-green: #00FF88;
   --deep-purple: #6366F1;
 
-  /* Neutrals */
+  /* Neutrals - Enhanced Contrast */
   --bg-primary: #0A0A0B;
   --bg-secondary: #161618;
   --bg-tertiary: #242428;
+  --bg-elevated: #2A2A2E;
 
   --text-primary: #FFFFFF;
-  --text-secondary: #A1A1AA;
-  --text-muted: #71717A;
+  --text-secondary: #B4B4B8;  /* Improved contrast */
+  --text-muted: #8A8A8F;      /* Better readability */
+  --text-accent: #E5E5E7;     /* Highlighted text */
 
   /* Accents */
   --success: #10B981;
@@ -40,9 +42,11 @@
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
+  --color-text-accent: var(--text-accent);
   --color-bg-primary: var(--bg-primary);
   --color-bg-secondary: var(--bg-secondary);
   --color-bg-tertiary: var(--bg-tertiary);
+  --color-bg-elevated: var(--bg-elevated);
 }
 
 /* Base styles */
@@ -53,6 +57,84 @@ html, body {
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  letter-spacing: -0.01em;
+  line-height: 1.6;
+}
+
+/* Enhanced Typography Scale */
+.text-display {
+  font-size: 3rem;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.text-heading-xl {
+  font-size: 2.25rem;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.text-heading-lg {
+  font-size: 1.875rem;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.text-heading-md {
+  font-size: 1.5rem;
+  line-height: 1.4;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.text-body-lg {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+.text-body {
+  font-size: 1rem;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+.text-body-sm {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.text-caption {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+}
+
+/* Enhanced Spacing System */
+.space-section {
+  padding: 3rem 0;
+}
+
+.space-component {
+  padding: 1.5rem;
+}
+
+.space-element {
+  padding: 1rem;
+}
+
+.space-compact {
+  padding: 0.75rem;
+}
+
+.space-dense {
+  padding: 0.5rem;
 }
 
 /* Enhanced Message Animations */
@@ -179,6 +261,216 @@ body {
 .interactive:active {
   transform: translateY(0px);
   transition: all 0.1s ease;
+}
+
+/* Comprehensive Accessibility Enhancements */
+
+
+
+/* Screen Reader Only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* High Contrast Mode - Enhanced but compatible */
+.high-contrast {
+  --text-primary: #FFFFFF;
+  --text-secondary: #E5E5E7;
+  --text-muted: #CCCCCC;
+  --bg-primary: #000000;
+  --bg-secondary: #1A1A1A;
+  --bg-tertiary: #333333;
+  --electric-blue: #00AAFF;
+  --neon-green: #00FF00;
+  --glass-border: rgba(255, 255, 255, 0.3);
+}
+
+.high-contrast .glass-card {
+  border: 2px solid var(--glass-border);
+  background: var(--bg-secondary);
+}
+
+.high-contrast button:focus,
+.high-contrast input:focus,
+.high-contrast textarea:focus {
+  outline: 3px solid var(--electric-blue);
+  outline-offset: 2px;
+}
+
+/* Reduced Motion */
+.reduced-motion *,
+.reduced-motion *::before,
+.reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Keyboard Navigation - Subtle focus for inputs */
+.keyboard-navigation button:focus,
+.keyboard-navigation [tabindex]:focus {
+  outline: 2px solid var(--electric-blue);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.2);
+}
+
+.keyboard-navigation input:focus,
+.keyboard-navigation textarea:focus {
+  outline: none;
+  border-color: var(--electric-blue);
+  box-shadow: 0 0 0 1px var(--electric-blue);
+}
+
+.keyboard-navigation .glass-card:focus-within {
+  border-color: var(--electric-blue);
+  box-shadow: 0 0 0 1px var(--electric-blue);
+}
+
+/* Font Size Scales */
+.font-small {
+  font-size: 14px;
+}
+
+.font-medium {
+  font-size: 16px;
+}
+
+.font-large {
+  font-size: 18px;
+}
+
+.font-extra-large {
+  font-size: 20px;
+}
+
+.font-large .text-xs { font-size: 14px; }
+.font-large .text-sm { font-size: 16px; }
+.font-large .text-base { font-size: 18px; }
+.font-large .text-lg { font-size: 20px; }
+
+.font-extra-large .text-xs { font-size: 16px; }
+.font-extra-large .text-sm { font-size: 18px; }
+.font-extra-large .text-base { font-size: 20px; }
+.font-extra-large .text-lg { font-size: 22px; }
+
+/* Screen Reader Mode */
+.screen-reader-mode .animate-slide-in-fade,
+.screen-reader-mode .animate-message-appear,
+.screen-reader-mode .animate-pulse-glow {
+  animation: none !important;
+}
+
+.screen-reader-mode .typing-dots {
+  display: none;
+}
+
+/* Focus Visible Enhancement */
+.focus-visible:focus {
+  outline: 2px solid var(--electric-blue);
+  outline-offset: 2px;
+}
+
+/* Interactive Element Accessibility */
+button, 
+[role="button"], 
+input, 
+textarea, 
+select, 
+[tabindex]:not([tabindex="-1"]) {
+  position: relative;
+}
+
+/* Remove default focus outlines for inputs in normal mode */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+}
+
+button:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--electric-blue);
+  outline-offset: 2px;
+  z-index: 1;
+}
+
+/* Only show input focus in keyboard navigation mode */
+.keyboard-navigation input:focus-visible,
+.keyboard-navigation textarea:focus-visible,
+.keyboard-navigation select:focus-visible {
+  outline: none;
+  border-color: var(--electric-blue);
+  box-shadow: 0 0 0 1px var(--electric-blue);
+}
+
+/* Keyboard Navigation Indicators */
+.keyboard-navigable {
+  position: relative;
+}
+
+.keyboard-navigable:focus {
+  outline: 2px dashed var(--electric-blue);
+  outline-offset: 4px;
+}
+
+/* Enhanced Touch Targets */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  [role="button"],
+  input,
+  textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Loading State Accessibility */
+.loading-skeleton {
+  animation: skeleton-loading 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes skeleton-loading {
+  from {
+    opacity: 0.6;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.reduced-motion .loading-skeleton {
+  animation: none;
+  opacity: 0.8;
+}
+
+/* Error State Accessibility */
+.error-message {
+  color: var(--error);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-message::before {
+  content: "⚠️";
+  font-size: 16px;
+}
+
+.high-contrast .error-message {
+  color: #FF6B6B;
+  border: 1px solid #FF6B6B;
+  padding: 8px;
+  border-radius: 4px;
 }
 
 /* Prose styling for markdown */

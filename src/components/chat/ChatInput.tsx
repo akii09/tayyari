@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { SendIcon, AttachIcon, CodeIcon, MicIcon } from "@/components/icons/Icons";
 import { FileUpload } from "./FileUpload";
 import { CodeEditor } from "./CodeEditor";
@@ -14,7 +14,7 @@ interface ChatInputProps {
 export function ChatInput({ 
   onSendMessage, 
   isLoading = false,
-  placeholder = "Type your request…" 
+  placeholder = "Type your request…"
 }: ChatInputProps) {
   const [message, setMessage] = useState("");
   const [showFileUpload, setShowFileUpload] = useState(false);
@@ -22,19 +22,43 @@ export function ChatInput({
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [editorCode, setEditorCode] = useState("");
   const [isRecording, setIsRecording] = useState(false);
+  const [contextualPlaceholder, setContextualPlaceholder] = useState(placeholder);
   
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileUploadRef = useRef<HTMLDivElement>(null);
 
-  // Auto-resize textarea
+  // Smart placeholder based on context
+  useEffect(() => {
+    const placeholders = [
+      "Ask me about code optimization...",
+      "Describe your system design challenge...",
+      "What technical problem can I help solve?",
+      "Share your code for review...",
+      "Type your request…"
+    ];
+    
+    if (showCodeEditor) {
+      setContextualPlaceholder("Describe what your code does...");
+    } else if (selectedFiles.length > 0) {
+      setContextualPlaceholder("Tell me about these files...");
+    } else {
+      const randomPlaceholder = placeholders[Math.floor(Math.random() * placeholders.length)];
+      setContextualPlaceholder(randomPlaceholder);
+    }
+  }, [showCodeEditor, selectedFiles.length]);
+
+  // Auto-resize textarea with smooth transition
   const adjustTextareaHeight = useCallback(() => {
     const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = 'auto';
-      textarea.style.height = Math.min(textarea.scrollHeight, 160) + 'px';
+      const newHeight = Math.min(textarea.scrollHeight, 160);
+      textarea.style.height = newHeight + 'px';
+      textarea.style.transition = 'height 0.2s ease-out';
     }
   }, []);
 
+  // Simple input change handler
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
     adjustTextareaHeight();
@@ -126,7 +150,7 @@ export function ChatInput({
                 value={message}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
-                placeholder={placeholder}
+                placeholder={contextualPlaceholder}
                 rows={1}
                 disabled={isLoading}
                 className="w-full resize-none bg-transparent outline-none placeholder:text-text-muted text-text-primary text-sm leading-relaxed max-h-40 min-h-[20px]"
