@@ -54,7 +54,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     setNotifications(prev => [...prev, newNotification]);
 
     // Auto-remove notification after duration (unless persistent)
-    if (!notification.persistent && newNotification.duration > 0) {
+    if (!notification.persistent && newNotification.duration && newNotification.duration > 0) {
       setTimeout(() => {
         hideNotification(id);
       }, newNotification.duration);

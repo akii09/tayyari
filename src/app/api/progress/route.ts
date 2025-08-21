@@ -44,7 +44,7 @@ export async function GET() {
           totalQuestions: p.totalQuestions,
           completedQuestions: p.completedQuestions,
           correctAnswers: p.correctAnswers,
-          accuracy: p.completedQuestions > 0 ? Math.round((p.correctAnswers / p.completedQuestions) * 100) : 0,
+          accuracy: (p.completedQuestions && p.completedQuestions > 0) ? Math.round(((p.correctAnswers || 0) / p.completedQuestions) * 100) : 0,
           averageTime: p.averageTime,
           difficulty: {
             easy: p.easyCompleted,
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
       )
       .limit(1);
     
-    const updateData = {
+    const updateData: any = {
       totalQuestions: sql`${userProgress.totalQuestions} + ${body.questionsCompleted}`,
       completedQuestions: sql`${userProgress.completedQuestions} + ${body.questionsCompleted}`,
       correctAnswers: sql`${userProgress.correctAnswers} + ${body.correctAnswers || 0}`,

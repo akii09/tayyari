@@ -89,7 +89,7 @@ export class UserService {
         
         if (lastActiveDate.toISOString().split('T')[0] === yesterday.toISOString().split('T')[0]) {
           // Consecutive day, increment streak
-          newStreak = user.currentStreak + 1;
+          newStreak = (user.currentStreak || 0) + 1;
         } else if (lastActiveDate.toISOString().split('T')[0] !== today) {
           // Missed days, reset streak
           newStreak = 1;

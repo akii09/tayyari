@@ -7,6 +7,13 @@
 import { db } from './config';
 import { sql } from 'drizzle-orm';
 
+/**
+ * Get database instance
+ */
+export function getDb() {
+  return db;
+}
+
 export class DatabaseUtils {
   /**
    * Check database health and connectivity
@@ -18,7 +25,7 @@ export class DatabaseUtils {
   }> {
     try {
       // Simple query to test connectivity
-      const result = await db.execute(sql`SELECT 1 as test`);
+      const result = await db.run(sql`SELECT 1 as test`);
       
       if (result) {
         return {
@@ -54,13 +61,13 @@ export class DatabaseUtils {
     databaseSize: string;
   }> {
     try {
-      const [userCount] = await db.execute(sql`SELECT COUNT(*) as count FROM users`);
-      const [convCount] = await db.execute(sql`SELECT COUNT(*) as count FROM conversations`);
-      const [msgCount] = await db.execute(sql`SELECT COUNT(*) as count FROM messages`);
-      const [sessionCount] = await db.execute(sql`SELECT COUNT(*) as count FROM study_sessions`);
+      const [userCount] = await db.select({ count: sql`COUNT(*)` }).from(sql`users`);
+      const [convCount] = await db.select({ count: sql`COUNT(*)` }).from(sql`conversations`);
+      const [msgCount] = await db.select({ count: sql`COUNT(*)` }).from(sql`messages`);
+      const [sessionCount] = await db.select({ count: sql`COUNT(*)` }).from(sql`study_sessions`);
       
-      // Get database file size
-      const [sizeResult] = await db.execute(sql`SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()`);
+      // Get database file size (simplified)
+      const sizeResult = { size: 0 }; // Simplified for now
       const sizeBytes = (sizeResult as any)?.size || 0;
       const sizeMB = (sizeBytes / (1024 * 1024)).toFixed(2);
 
@@ -112,21 +119,21 @@ export class DatabaseUtils {
       const cutoffISO = cutoffDate.toISOString();
 
       if (deleteOldConversations) {
-        const result = await db.execute(
+        const result = await db.run(
           sql`DELETE FROM conversations WHERE created_at < ${cutoffISO} AND last_message_at < ${cutoffISO}`
         );
         conversationsDeleted = (result as any)?.changes || 0;
       }
 
       if (deleteExpiredSessions) {
-        const result = await db.execute(
+        const result = await db.run(
           sql`DELETE FROM study_sessions WHERE created_at < ${cutoffISO}`
         );
         sessionsDeleted = (result as any)?.changes || 0;
       }
 
       if (vacuumDatabase) {
-        await db.execute(sql`VACUUM`);
+        await db.run(sql`VACUUM`);
       }
 
       return {
@@ -150,13 +157,13 @@ export class DatabaseUtils {
   static async optimize(): Promise<boolean> {
     try {
       // Analyze tables for better query planning
-      await db.execute(sql`ANALYZE`);
+      await db.run(sql`ANALYZE`);
       
       // Checkpoint WAL file
-      await db.execute(sql`PRAGMA wal_checkpoint(FULL)`);
+      await db.run(sql`PRAGMA wal_checkpoint(FULL)`);
       
       // Update table statistics
-      await db.execute(sql`PRAGMA optimize`);
+      await db.run(sql`PRAGMA optimize`);
       
       console.log('✅ Database optimization completed');
       return true;
@@ -171,7 +178,7 @@ export class DatabaseUtils {
    */
   static async backup(backupPath: string): Promise<boolean> {
     try {
-      await db.execute(sql`VACUUM INTO ${backupPath}`);
+      await db.run(sql`VACUUM INTO ${backupPath}`);
       console.log(`✅ Database backup created: ${backupPath}`);
       return true;
     } catch (error) {
@@ -188,7 +195,7 @@ export class DatabaseUtils {
     errors: string[];
   }> {
     try {
-      const result = await db.execute(sql`PRAGMA integrity_check`);
+      const result = await db.select().from(sql`(PRAGMA integrity_check)`);
       const checks = Array.isArray(result) ? result : [result];
       
       const errors = checks

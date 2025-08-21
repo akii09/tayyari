@@ -187,7 +187,18 @@ export class ChatService {
   static async searchMessages(userId: string, query: string, limit: number = 10): Promise<Message[]> {
     try {
       return await db
-        .select()
+        .select({
+          id: messages.id,
+          conversationId: messages.conversationId,
+          role: messages.role,
+          content: messages.content,
+          attachments: messages.attachments,
+          tokens: messages.tokens,
+          model: messages.model,
+          feedback: messages.feedback,
+          feedbackNote: messages.feedbackNote,
+          createdAt: messages.createdAt,
+        })
         .from(messages)
         .innerJoin(conversations, eq(conversations.id, messages.conversationId))
         .where(

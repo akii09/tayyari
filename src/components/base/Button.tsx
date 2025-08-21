@@ -18,14 +18,11 @@ export function Button({
       ? "gradient-primary text-white px-4 py-2 rounded-md interactive"
       : "text-text-secondary hover:text-white px-3 py-2";
   
-  // Filter out custom props that shouldn't go to DOM
-  const { isLoading: _, ...domProps } = props;
-  
   return (
     <button 
       className={`${base} ${styles} ${className}`} 
       disabled={disabled || isLoading}
-      {...domProps}
+      {...props}
     >
       {isLoading ? (
         <div className="flex items-center gap-2">

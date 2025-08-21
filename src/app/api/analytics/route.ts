@@ -248,9 +248,9 @@ async function getPerformanceTrends(userId: string) {
   return {
     categoryProgress: categoryProgress.map(cp => ({
       category: cp.category,
-      accuracy: cp.completedQuestions > 0 ? Math.round((cp.correctAnswers / cp.completedQuestions) * 100) : 0,
+      accuracy: (cp.completedQuestions && cp.completedQuestions > 0) ? Math.round(((cp.correctAnswers || 0) / cp.completedQuestions) * 100) : 0,
       averageTime: cp.averageTime,
-      questionsCompleted: cp.completedQuestions,
+      questionsCompleted: cp.completedQuestions || 0,
       lastPracticed: cp.lastPracticed,
     })),
     recentPerformance: recentSessions.reverse().map((session, index) => ({
@@ -287,15 +287,15 @@ async function generateRecommendations(userId: string) {
   
   // Check for weak areas
   const weakAreas = progress.filter(p => {
-    const accuracy = p.completedQuestions > 0 ? (p.correctAnswers / p.completedQuestions) : 0;
-    return accuracy < 0.7 && p.completedQuestions > 5;
+    const accuracy = (p.completedQuestions && p.completedQuestions > 0) ? ((p.correctAnswers || 0) / p.completedQuestions) : 0;
+    return accuracy < 0.7 && (p.completedQuestions || 0) > 5;
   });
   
   if (weakAreas.length > 0) {
     recommendations.push({
       type: 'improvement',
       title: 'Focus on Weak Areas',
-      description: `Consider spending more time on ${weakAreas[0].category}. Your current accuracy is ${Math.round((weakAreas[0].correctAnswers / weakAreas[0].completedQuestions) * 100)}%.`,
+      description: `Consider spending more time on ${weakAreas[0].category}. Your current accuracy is ${Math.round(((weakAreas[0].correctAnswers || 0) / (weakAreas[0].completedQuestions || 1)) * 100)}%.`,
       action: 'practice',
       priority: 'high',
     });

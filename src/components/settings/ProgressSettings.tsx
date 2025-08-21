@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/base/Button';
 import { GlassCard } from '@/components/base/GlassCard';
-import { StickySaveSection } from './StickySaveSection';
+import { SettingsActionBar } from './SettingsActionBar';
 
 interface ProgressData {
   totalStudyHours: number;

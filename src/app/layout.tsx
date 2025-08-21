@@ -42,7 +42,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-bg-primary text-text-primary`}>
+              <body 
+          className={`${geistSans.variable} ${geistMono.variable} antialiased bg-bg-primary text-text-primary`}
+          suppressHydrationWarning={true}
+        >
         <AuthProvider>
           <ProgressiveEnhancementProvider>
             <NotificationProvider>

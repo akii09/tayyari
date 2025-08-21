@@ -156,12 +156,19 @@ export const userSettings = sqliteTable('user_settings', {
   emailNotifications: integer('email_notifications', { mode: 'boolean' }).default(true),
   pushNotifications: integer('push_notifications', { mode: 'boolean' }).default(true),
   weeklyReports: integer('weekly_reports', { mode: 'boolean' }).default(true),
-  reminderTime: text('reminder_time'), // daily reminder time
+  reminderTime: text('reminder_time').default('18:00'), // daily reminder time
+  studyReminders: integer('study_reminders', { mode: 'boolean' }).default(true),
+  progressUpdates: integer('progress_updates', { mode: 'boolean' }).default(true),
+  newFeatures: integer('new_features', { mode: 'boolean' }).default(false),
+  marketingEmails: integer('marketing_emails', { mode: 'boolean' }).default(false),
   
   // Privacy Settings
   shareProgress: integer('share_progress', { mode: 'boolean' }).default(false),
   publicProfile: integer('public_profile', { mode: 'boolean' }).default(false),
   analyticsOptIn: integer('analytics_opt_in', { mode: 'boolean' }).default(true),
+  dataRetention: text('data_retention').default('2years'), // '1year', '2years', '5years', 'forever'
+  anonymizeData: integer('anonymize_data', { mode: 'boolean' }).default(true),
+  thirdPartySharing: integer('third_party_sharing', { mode: 'boolean' }).default(false),
   
   // Metadata
   createdAt: text('created_at').default(sql`(datetime('now'))`),

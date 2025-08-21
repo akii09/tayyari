@@ -84,7 +84,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       email: user.email || undefined,
       role: user.role,
       experienceLevel: user.experienceLevel,
-      onboardingCompleted: user.onboardingCompleted,
+      onboardingCompleted: user.onboardingCompleted || false,
     };
   } catch (error) {
     console.error('Session error:', error);
