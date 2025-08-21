@@ -22,6 +22,11 @@ export function LoginForm({ onLogin }: LoginFormProps) {
       return;
     }
 
+    if (!email.trim() || !email.includes('@')) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
 
@@ -31,7 +36,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name: name.trim(), email: email.trim() || undefined }),
+        body: JSON.stringify({ name: name.trim(), email: email.trim() }),
       });
 
       const data = await response.json();
@@ -56,7 +61,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
             Welcome to TayyarAI
           </h1>
           <p className="text-text-secondary">
-            Enter your details to start your interview preparation journey
+            Sign in with your email or create a new account to start your interview preparation journey
           </p>
         </div>
 
@@ -80,7 +85,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-text-secondary mb-2">
-                Email (optional)
+                Email *
               </label>
               <input
                 id="email"
@@ -89,9 +94,10 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your.email@example.com"
                 className="w-full px-3 py-2 bg-bg-secondary border border-white/10 rounded-lg focus:border-electric-blue outline-none transition-colors"
+                required
               />
               <p className="text-xs text-text-muted mt-1">
-                Email helps us save your progress and send you updates
+                We'll use this to log you in and save your progress
               </p>
             </div>
 
@@ -106,9 +112,9 @@ export function LoginForm({ onLogin }: LoginFormProps) {
               variant="primary"
               className="w-full"
               isLoading={isLoading}
-              disabled={!name.trim() || isLoading}
+              disabled={!name.trim() || !email.trim() || isLoading}
             >
-              {isLoading ? 'Signing In...' : 'Get Started'}
+              {isLoading ? 'Signing In...' : 'Continue'}
             </Button>
           </form>
 

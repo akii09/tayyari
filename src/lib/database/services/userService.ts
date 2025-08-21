@@ -51,6 +51,22 @@ export class UserService {
     }
   }
 
+  // Get user by email
+  static async getUserByEmail(email: string): Promise<User | null> {
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, email))
+        .limit(1);
+
+      return user || null;
+    } catch (error) {
+      console.error('❌ Error fetching user by email:', error);
+      return null;
+    }
+  }
+
   // Update user onboarding completion
   static async completeOnboarding(userId: string, onboardingData: Partial<NewUser>): Promise<boolean> {
     try {

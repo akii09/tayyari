@@ -3,18 +3,20 @@ import { UserService } from '@/lib/database/services/userService';
 import { createSession } from '@/lib/auth/session';
 
 /**
- * Simple login endpoint
+ * Authentication endpoint - handles both login and registration
  * 
  * POST /api/auth/login
- * Body: { name: string, email?: string }
+ * Body: { name: string, email: string }
  * 
- * Creates a new user if doesn't exist, or logs in existing user
+ * If email exists: Logs in existing user
+ * If email doesn't exist: Creates new user account
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { name, email } = body;
 
+    // Validate required fields
     if (!name || typeof name !== 'string' || name.trim().length < 2) {
       return NextResponse.json(
         { error: 'Name is required and must be at least 2 characters' },
@@ -22,33 +24,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // For demo purposes, we'll create a user with minimal info
-    // In production, you'd have proper authentication
-    let user;
-    
-    if (email) {
-      // Try to find existing user by email
-      const users = await UserService.getAllUsers(100);
-      user = users.find(u => u.email === email);
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return NextResponse.json(
+        { error: 'Valid email is required' },
+        { status: 400 }
+      );
     }
 
-    if (!user) {
-      // Create new user with default values
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim().toLowerCase();
+
+    // Check if user already exists with this email
+    let user = await UserService.getUserByEmail(trimmedEmail);
+
+    if (user) {
+      // User exists - log them in
+      console.log(`🔐 User logged in: ${user.name} (${trimmedEmail})`);
+      
+      // Update last active date
+      await UserService.updateActivity(user.id);
+    } else {
+      // User doesn't exist - create new account
+      console.log(`👤 Creating new user: ${trimmedName} (${trimmedEmail})`);
+      
       user = await UserService.createUser({
-        name: name.trim(),
-        email: email || undefined,
-        role: 'working', // Default role
-        experienceLevel: 'intermediate', // Default level
+        name: trimmedName,
+        email: trimmedEmail,
+        role: 'Software Engineer', // Default role
+        experienceLevel: 'Intermediate', // Default level
         hoursPerWeek: 8, // Default hours
         onboardingCompleted: false,
       });
     }
 
-    // Create session
+    // Create session for the user
     await createSession(user);
 
     return NextResponse.json({
       success: true,
+      isNewUser: !user.onboardingCompleted,
       user: {
         id: user.id,
         name: user.name,
@@ -59,9 +73,18 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Authentication error:', error);
+    
+    // Handle specific database errors
+    if (error instanceof Error && error.message.includes('UNIQUE constraint failed')) {
+      return NextResponse.json(
+        { error: 'An account with this email already exists' },
+        { status: 409 }
+      );
+    }
+    
     return NextResponse.json(
-      { error: 'Login failed' },
+      { error: 'Authentication failed. Please try again.' },
       { status: 500 }
     );
   }
