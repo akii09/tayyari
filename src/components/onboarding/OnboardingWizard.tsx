@@ -13,6 +13,7 @@ import { DropdownSelect } from "@/components/base/DropdownSelect";
 import { StepTransition } from "@/components/base/StepTransition";
 import { OnboardingActions } from "@/components/onboarding/OnboardingActions";
 import { OnboardingProgress } from "@/components/onboarding/OnboardingProgress";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 type Step = 0 | 1 | 2 | 3;
 
@@ -24,28 +25,84 @@ const stepConfig = [
 ];
 
 export function OnboardingWizard() {
+  const { user, updateUser } = useAuth();
   const [step, setStep] = useState<Step>(0);
   const [selectedType, setSelectedType] = useState<InterviewTypeKey | null>(null);
-  const [basic, setBasic] = useState({ name: "", role: roles[0].value, level: experienceLevels[0].value });
+  const [basic, setBasic] = useState({ 
+    name: user?.name || "", 
+    role: roles[0].value, 
+    level: experienceLevels[0].value 
+  });
   const [date, setDate] = useState<Date | null>(null);
   const [hours, setHours] = useState<number>(6);
   const [preferences, setPreferences] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const next = useCallback(() => {
+  const next = useCallback(async () => {
     if (step < 3) {
       setIsLoading(true);
+      setError('');
+      
+      // If this is the final step, save to database
+      if (step === 2) {
+        try {
+          await completeOnboarding();
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Failed to save onboarding data');
+          setIsLoading(false);
+          return;
+        }
+      }
       setTimeout(() => {
-        setStep((s) => Math.min(3, (s + 1) as Step));
+        setStep((s) => {
+          const nextStep = Math.min(3, s + 1);
+          return nextStep as Step;
+        });
         setIsLoading(false);
         // Scroll to top on step change
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }, 500);
     }
-  }, [step]);
+  }, [step, basic, selectedType, date, hours, preferences]);
 
+  const completeOnboarding = async () => {
+    if (!selectedType || !date) {
+      throw new Error('Please complete all required fields');
+    }
+
+    const onboardingData = {
+      name: basic.name,
+      role: basic.role,
+      experienceLevel: basic.level,
+      interviewType: selectedType,
+      targetDate: date.toISOString(),
+      hoursPerWeek: hours,
+      preferences,
+    };
+
+    const response = await fetch('/api/onboarding', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(onboardingData),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to save onboarding data');
+    }
+
+    // Update user state
+    updateUser({ onboardingCompleted: true });
+  };
   const back = useCallback(() => {
-    setStep((s) => Math.max(0, (s - 1) as Step));
+    setStep((s) => {
+      const prevStep = Math.max(0, s - 1);
+      return prevStep as Step;
+    });
     // Scroll to top on step change
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
@@ -81,6 +138,12 @@ export function OnboardingWizard() {
       <section className="mx-auto max-w-3xl px-4 py-10">
         <GlassCard className="p-6 sm:p-10">
           <OnboardingProgress currentStep={step} totalSteps={4} steps={stepConfig} />
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <p className="text-red-400 text-sm">{error}</p>
+            </div>
+          )}
 
           <StepTransition step={step}>
             {step === 0 && (
@@ -126,23 +189,23 @@ function StepBasic({ basic, setBasic }: { basic: { name: string; role: string; l
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="sm:col-span-3">
-          <label className="text-sm text-[var(--text-secondary)]">Name</label>
+          <label className="text-sm text-text-secondary">Name</label>
           <input 
             value={basic.name} 
             onChange={(e) => setBasic({ ...basic, name: e.target.value })} 
             placeholder="Your name" 
-            className="mt-2 w-full bg-transparent border border-white/10 rounded-md px-3 py-2 focus:border-[var(--electric-blue)] transition-colors" 
+            className="mt-2 w-full bg-transparent border border-white/10 rounded-md px-3 py-2 focus:border-electric-blue transition-colors" 
             autoFocus
           />
         </div>
         <div>
-          <label className="text-sm text-[var(--text-secondary)]">Current Role</label>
+          <label className="text-sm text-text-secondary">Current Role</label>
           <div className="mt-2">
             <DropdownSelect value={basic.role} onChange={(v) => setBasic({ ...basic, role: v })} options={roles} />
           </div>
         </div>
         <div>
-          <label className="text-sm text-[var(--text-secondary)]">Experience Level</label>
+          <label className="text-sm text-text-secondary">Experience Level</label>
           <div className="mt-2">
             <DropdownSelect value={basic.level} onChange={(v) => setBasic({ ...basic, level: v })} options={experienceLevels} />
           </div>
@@ -174,10 +237,10 @@ function StepGoalSetup({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {interviewTypes.map((c) => (
             <button key={c.key} className="text-left" onClick={() => onSelect(c.key)} aria-pressed={selected === c.key}>
-              <GlassCard className={`p-5 h-full interactive ${selected === c.key ? "ring-2 ring-[var(--electric-blue)]" : ""}`}>
+              <GlassCard className={`p-5 h-full interactive ${selected === c.key ? "ring-2 ring-electric-blue" : ""}`}>
                 <div className="mb-2">{c.icon === "dsa" ? <DsaIcon /> : c.icon === "system" ? <SystemDesignIcon /> : <BehavioralIcon />}</div>
                 <div className="text-lg font-medium">{c.label}</div>
-                <div className="text-sm text-[var(--text-secondary)] mt-1">{c.desc}</div>
+                <div className="text-sm text-text-secondary mt-1">{c.desc}</div>
               </GlassCard>
             </button>
           ))}
@@ -188,16 +251,16 @@ function StepGoalSetup({
         <h3 className="text-lg font-medium">Timeline & Commitment</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <GlassCard className="p-4">
-            <label className="text-sm text-[var(--text-secondary)]">Target Date</label>
+            <label className="text-sm text-text-secondary">Target Date</label>
             <DateSelect value={date} onChange={setDate} />
           </GlassCard>
           <GlassCard className="p-4">
-            <label className="text-sm text-[var(--text-secondary)]">Hours / week</label>
+            <label className="text-sm text-text-secondary">Hours / week</label>
             <HoursPerWeek value={hours} onChange={setHours} />
           </GlassCard>
         </div>
         {date && (
-          <div className="text-sm text-[var(--text-secondary)] text-center">
+          <div className="text-sm text-text-secondary text-center">
             {(() => {
               const now = new Date();
               const diffMs = date.getTime() - now.getTime();
@@ -253,7 +316,7 @@ function StepPreferences({
           ))}
         </div>
       ) : (
-        <div className="text-center py-8 text-[var(--text-secondary)]">
+        <div className="text-center py-8 text-text-secondary">
           <p>Perfect! We have everything we need to create your personalized roadmap.</p>
         </div>
       )}

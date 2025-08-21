@@ -11,6 +11,8 @@ import { useFeatureDetection } from "@/components/ui/ProgressiveEnhancement";
 import { useErrorHandler } from "@/components/ui/ErrorBoundary";
 import { useNotifications, notificationUtils } from "@/components/ui/NotificationSystem";
 import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
+import { useAuth } from "@/lib/auth/AuthContext";
+import { useRouter } from "next/navigation";
 
 interface Message {
   id: string;
@@ -132,6 +134,7 @@ export default function ChatPage() {
   const featureDetection = useFeatureDetection();
   const { handleError } = useErrorHandler();
   const { showNotification } = useNotifications();
+  const router = useRouter();
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -236,6 +239,10 @@ export default function ChatPage() {
 
   const handleClearChat = () => {
     setMessages([]);
+  };
+
+  const handleSettings = () => {
+    router.push('/settings');
   };
 
   const handleExportChat = () => {
@@ -394,7 +401,7 @@ export default function ChatPage() {
         progress={85}
         onClear={handleClearChat}
         onExport={handleExportChat}
-        onSettings={() => console.log('Settings clicked')}
+        onSettings={handleSettings}
       />
 
       {/* Command Palette */}

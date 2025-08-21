@@ -33,11 +33,11 @@ export function DateSelect({ value: controlledValue, onChange }: Props) {
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between bg-transparent border border-white/10 rounded-md px-3 py-2 text-left hover:border-white/20"
       >
-        <span className={value ? "" : "text-[var(--text-muted)]"}>{label}</span>
+        <span className={value ? "" : "text-text-muted"}>{label}</span>
         <span>▾</span>
       </button>
       {open && (
-        <div className={`absolute z-50 w-full rounded-lg border border-white/10 bg-[var(--bg-secondary)] p-3 shadow-xl ${
+        <div className={`absolute z-50 w-full rounded-lg border border-white/10 bg-bg-secondary p-3 shadow-xl ${
           dropDirection === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'
         }`}>
           <Calendar
@@ -84,7 +84,7 @@ function Calendar({ value, onPick }: { value: Date | null; onPick: (d: Date) => 
         </div>
         <button onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))} className="px-2 py-1 hover:bg-white/10 rounded">→</button>
       </div>
-      <div className="grid grid-cols-7 gap-2 text-xs text-[var(--text-secondary)]">
+      <div className="grid grid-cols-7 gap-2 text-xs text-text-secondary">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (<div key={d} className="text-center">{d}</div>))}
       </div>
       <div className="grid grid-cols-7 gap-2 text-sm">
@@ -92,7 +92,7 @@ function Calendar({ value, onPick }: { value: Date | null; onPick: (d: Date) => 
           <button
             key={i}
             className={`px-2 py-2 rounded-md text-center ${
-              d == null ? "opacity-0" : isPast(d) ? "text-[var(--text-muted)] cursor-not-allowed" : "hover:bg-white/10"
+              d == null ? "opacity-0" : isPast(d) ? "text-text-muted cursor-not-allowed" : "hover:bg-white/10"
             } ${value && d && value.toDateString() === d.toDateString() ? "bg-white/20" : ""}`}
             onClick={() => d && !isPast(d) && onPick(d)}
             disabled={!d || isPast(d)}
@@ -107,7 +107,7 @@ function Calendar({ value, onPick }: { value: Date | null; onPick: (d: Date) => 
           <QuickPreset label="1m" addDays={30} onPick={onPick} />
           <QuickPreset label="3m" addDays={90} onPick={onPick} />
         </div>
-        <button className="text-xs text-[var(--text-secondary)] hover:text-white" onClick={() => onPick(new Date())}>Today</button>
+        <button className="text-xs text-text-secondary hover:text-white" onClick={() => onPick(new Date())}>Today</button>
       </div>
     </div>
   );
