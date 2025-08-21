@@ -1,6 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { 
+  SettingsIcon, 
+  ClearIcon, 
+  ExportIcon, 
+  SearchIcon,
+  MoreVerticalIcon
+} from "@/components/icons/Icons";
 
 interface FloatingActionsProps {
   progress?: number;
@@ -18,10 +25,30 @@ export function FloatingActions({
   const [showMenu, setShowMenu] = useState(false);
 
   const menuItems = [
-    { label: "Clear Chat", icon: "🗑️", action: onClear, color: "text-red-400 hover:text-red-300" },
-    { label: "Export Chat", icon: "📤", action: onExport, color: "text-blue-400 hover:text-blue-300" },
-    { label: "Settings", icon: "⚙️", action: onSettings, color: "text-gray-400 hover:text-gray-300" },
-    { label: "Search", icon: "🔍", action: () => {}, color: "text-purple-400 hover:text-purple-300" },
+    { 
+      label: "Clear Chat", 
+      icon: <ClearIcon size={16} />, 
+      action: onClear, 
+      color: "text-red-400 hover:text-red-300" 
+    },
+    { 
+      label: "Export Chat", 
+      icon: <ExportIcon size={16} />, 
+      action: onExport, 
+      color: "text-blue-400 hover:text-blue-300" 
+    },
+    { 
+      label: "Settings", 
+      icon: <SettingsIcon size={16} />, 
+      action: onSettings, 
+      color: "text-gray-400 hover:text-gray-300" 
+    },
+    { 
+      label: "Search", 
+      icon: <SearchIcon size={16} />, 
+      action: () => {}, 
+      color: "text-purple-400 hover:text-purple-300" 
+    },
   ];
 
   return (
@@ -47,7 +74,7 @@ export function FloatingActions({
                   setShowMenu(false);
                 }}
               >
-                <span className="text-lg">{item.icon}</span>
+                <span className={item.color}>{item.icon}</span>
                 <span className={`text-sm font-medium ${item.color} min-w-max`}>
                   {item.label}
                 </span>
@@ -113,11 +140,9 @@ export function FloatingActions({
         onClick={() => setShowMenu(!showMenu)}
         title="More options"
       >
-        {/* Three Dots Icon */}
-        <div className={`flex flex-col gap-1 transition-all duration-200 ${showMenu ? 'rotate-90' : ''}`}>
-          <div className="w-1 h-1 bg-white rounded-full"></div>
-          <div className="w-1 h-1 bg-white rounded-full"></div>
-          <div className="w-1 h-1 bg-white rounded-full"></div>
+        {/* More Options Icon */}
+        <div className={`transition-all duration-200 ${showMenu ? 'rotate-90' : ''}`}>
+          <MoreVerticalIcon size={20} className="text-white" />
         </div>
         
         {/* Tooltip */}

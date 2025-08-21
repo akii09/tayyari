@@ -6,7 +6,16 @@ import { HeaderDock } from "@/components/shell/HeaderDock";
 import { ProgressiveEnhancementProvider } from "@/components/ui/ProgressiveEnhancement";
 import { NotificationProvider } from "@/components/ui/NotificationSystem";
 import { AccessibilityEnhancer } from "@/components/ui/AccessibilityEnhancer";
+import { AuthProvider } from "@/lib/auth/AuthContext";
 import "./globals.css";
+
+// Initialize database on app startup
+if (typeof window === 'undefined') {
+  // Only run on server side
+  import("@/lib/database/config").then(({ initializeDatabase }) => {
+    initializeDatabase();
+  }).catch(console.error);
+}
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,18 +42,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[var(--bg-primary)] text-[var(--text-primary)]`}>
-        <ProgressiveEnhancementProvider>
-          <NotificationProvider>
-            <AccessibilityEnhancer>
-              <div className="min-h-screen flex flex-col">
-                <HeaderDock />
-                <main className="flex-1">{children}</main>
-                <footer className="border-t border-white/5 text-center text-xs text-[var(--text-secondary)] py-4">© {new Date().getFullYear()} TayyariAI</footer>
-              </div>
-            </AccessibilityEnhancer>
-          </NotificationProvider>
-        </ProgressiveEnhancementProvider>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-bg-primary text-text-primary`}>
+        <AuthProvider>
+          <ProgressiveEnhancementProvider>
+            <NotificationProvider>
+              <AccessibilityEnhancer>
+                <div className="min-h-screen flex flex-col">
+                  <HeaderDock />
+                  <main className="flex-1">{children}</main>
+                  <footer className="border-t border-white/5 text-center text-xs text-[var(--text-secondary)] py-4">© {new Date().getFullYear()} TayyariAI</footer>
+                </div>
+              </AccessibilityEnhancer>
+            </NotificationProvider>
+          </ProgressiveEnhancementProvider>
+        </AuthProvider>
       </body>
     </html>
   );

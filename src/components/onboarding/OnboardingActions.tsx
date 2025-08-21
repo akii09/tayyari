@@ -41,14 +41,14 @@ export function OnboardingActions({
 
             <div className="flex items-center gap-6">
               {/* Progress indicator */}
-              <div className="flex items-center gap-3 text-sm text-[var(--text-secondary)]">
+              <div className="flex items-center gap-3 text-sm text-text-secondary">
                 <span>{currentStep + 1} of {totalSteps}</span>
                 <div className="flex gap-1.5">
                   {Array.from({ length: totalSteps }, (_, i) => (
                     <div
                       key={i}
                       className={`h-2 w-8 rounded-full transition-all duration-300 ${
-                        i <= currentStep ? "bg-[var(--electric-blue)]" : "bg-white/20"
+                        i <= currentStep ? "bg-electric-blue" : "bg-white/20"
                       }`}
                     />
                   ))}
@@ -73,7 +73,7 @@ export function OnboardingActions({
           </div>
 
           {/* Keyboard shortcut hint */}
-          <div className="mt-3 text-xs text-[var(--text-muted)] text-center">
+          <div className="mt-3 text-xs text-text-muted text-center">
             Press <kbd className="px-1.5 py-0.5 bg-white/10 rounded text-xs">Enter</kbd> to continue
             {!isFirstStep && (
               <> or <kbd className="px-1.5 py-0.5 bg-white/10 rounded text-xs">Esc</kbd> to go back</>
