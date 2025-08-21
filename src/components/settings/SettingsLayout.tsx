@@ -102,7 +102,7 @@ export function SettingsLayout() {
 
   return (
     <div className="min-h-screen pl-20 sm:pl-24 bg-bg-primary">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8 pb-24">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -134,52 +134,52 @@ export function SettingsLayout() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Settings Menu */}
           <div className="lg:col-span-1">
-            <GlassCard className="p-4">
-              <div className="space-y-2">
-                {menuItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveSection(item.id)}
-                    className={`w-full text-left p-4 rounded-lg transition-all duration-200 flex items-center gap-3 ${
-                      activeSection === item.id
-                        ? 'bg-electric-blue/20 border border-electric-blue/30'
-                        : 'hover:bg-bg-secondary/50 border border-transparent'
-                    }`}
-                  >
-                    <span className={item.color}>{item.icon}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-text-primary">{item.label}</div>
-                      <div className="text-xs text-text-muted mt-1 truncate">{item.description}</div>
-                    </div>
-                    <ArrowRightIcon size={16} className="text-text-muted" />
-                  </button>
-                ))}
-              </div>
+            <div className="sticky top-8">
+              <GlassCard className="p-4">
+                <div className="space-y-2">
+                  {menuItems.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveSection(item.id)}
+                      className={`w-full text-left p-4 rounded-lg transition-all duration-200 flex items-center gap-3 ${
+                        activeSection === item.id
+                          ? 'bg-electric-blue/20 border border-electric-blue/30'
+                          : 'hover:bg-bg-secondary/50 border border-transparent'
+                      }`}
+                    >
+                      <span className={item.color}>{item.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-text-primary">{item.label}</div>
+                        <div className="text-xs text-text-muted mt-1 truncate">{item.description}</div>
+                      </div>
+                      <ArrowRightIcon size={16} className="text-text-muted" />
+                    </button>
+                  ))}
+                </div>
 
-              {/* User Info Card */}
-              <div className="mt-6 pt-6 border-t border-white/10">
-                <div className="flex items-center gap-3 p-3 bg-bg-secondary/50 rounded-lg">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-electric-blue to-deep-purple flex items-center justify-center text-white text-sm font-medium">
-                    {user?.name?.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-text-primary truncate">{user?.name}</div>
-                    <div className="text-xs text-text-muted truncate">{user?.email || 'No email'}</div>
-                    <div className="text-xs text-text-muted mt-1">
-                      {user?.experienceLevel} • {user?.role}
+                {/* User Info Card */}
+                <div className="mt-6 pt-6 border-t border-white/10">
+                  <div className="flex items-center gap-3 p-3 bg-bg-secondary/50 rounded-lg">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-electric-blue to-deep-purple flex items-center justify-center text-white text-sm font-medium">
+                      {user?.name?.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-text-primary truncate">{user?.name}</div>
+                      <div className="text-xs text-text-muted truncate">{user?.email || 'No email'}</div>
+                      <div className="text-xs text-text-muted mt-1">
+                        {user?.experienceLevel} • {user?.role}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </GlassCard>
+              </GlassCard>
+            </div>
           </div>
 
           {/* Settings Content */}
-          <div className="lg:col-span-3 relative">
-            <GlassCard className="relative overflow-hidden">
-              <div className="p-6 max-h-[calc(100vh-12rem)] overflow-y-auto">
-                {renderSettingsContent()}
-              </div>
+          <div className="lg:col-span-3">
+            <GlassCard className="p-6">
+              {renderSettingsContent()}
             </GlassCard>
           </div>
         </div>
