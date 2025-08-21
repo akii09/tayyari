@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       role: 'assistant',
       content: aiResponse.content,
       tokens: aiResponse.tokens,
-      model: body.model || 'tayyari-ai-v1',
+      model: body.model || 'tayyarai-v1',
     });
     
     return NextResponse.json({

@@ -5,7 +5,9 @@ import * as schema from './schema';
 import path from 'path';
 
 // Database file path - stores in project root/data directory
-const DB_PATH = process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'tayyari.db');
+import { APP_METADATA } from '@/lib/config/metadata';
+
+const DB_PATH = process.env.DATABASE_PATH || path.join(process.cwd(), 'data', APP_METADATA.databaseName);
 
 // Ensure data directory exists
 import fs from 'fs';

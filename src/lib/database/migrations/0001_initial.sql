@@ -1,4 +1,4 @@
--- Initial database schema for TayyariAI
+-- Initial database schema for TayyarAI
 -- This file contains the complete database structure
 
 -- Users table - stores user onboarding and profile information

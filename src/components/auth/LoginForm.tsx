@@ -53,7 +53,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-text-primary mb-2">
-            Welcome to TayyariAI
+            Welcome to TayyarAI
           </h1>
           <p className="text-text-secondary">
             Enter your details to start your interview preparation journey

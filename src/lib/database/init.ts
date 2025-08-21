@@ -3,7 +3,7 @@
 /**
  * Database Initialization Script
  * 
- * This script initializes the SQLite database for TayyariAI.
+ * This script initializes the SQLite database for TayyarAI.
  * It creates the database file, applies migrations, and sets up initial data.
  * 
  * Usage:
@@ -16,7 +16,7 @@ import fs from 'fs';
 import path from 'path';
 
 async function main() {
-  console.log('🚀 Starting TayyariAI Database Initialization...\n');
+  console.log('🚀 Starting TayyarAI Database Initialization...\n');
 
   try {
     // Ensure data directory exists
@@ -43,7 +43,7 @@ async function main() {
       console.log('   - Run `npm run db:studio` to view the database');
       console.log('   - Run `npm run db:seed` to add sample data (optional)');
       
-      console.log('\n📁 Database location: ./data/tayyari.db');
+      console.log('\n📁 Database location: ./data/tayyarai.db');
     } else {
       console.log('❌ Database initialization failed!');
       process.exit(1);

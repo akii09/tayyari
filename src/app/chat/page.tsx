@@ -30,7 +30,7 @@ const initialMessages: Message[] = [
   { 
     id: "m1", 
     role: "assistant", 
-    content: "Hello! I'm NymbleUp AI, your development assistant. I can help you with coding, system design, code reviews, and much more. What would you like to work on today?",
+    content: "Hello! I'm TayyarAI, your interview preparation assistant. I can help you with coding interviews, system design, behavioral questions, and much more. What would you like to prepare for today?",
     timestamp: new Date(baseTime.getTime() - 5 * 60 * 1000) // 5 minutes before base
   },
   { 

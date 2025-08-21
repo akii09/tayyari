@@ -108,7 +108,7 @@ export function ProgressSettings() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `tayyari-progress-export-${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `tayyarai-progress-export-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);

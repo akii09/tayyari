@@ -63,7 +63,7 @@ export function ChatMessage({
           <div className="relative">
             <Image 
               src="/img/logo.png" 
-              alt="NymbleUp AI" 
+              alt="TayyarAI" 
               width={32} 
               height={32} 
               className="rounded-full ring-2 ring-electric-blue/20" 
@@ -79,7 +79,7 @@ export function ChatMessage({
           {/* Header */}
           <header className="flex items-center gap-2">
             <span className="text-xs font-medium text-text-secondary uppercase tracking-wide">
-              {isUser ? "You" : "NymbleUp AI"}
+              {isUser ? "You" : "TayyarAI"}
             </span>
             {displayTime && (
               <>

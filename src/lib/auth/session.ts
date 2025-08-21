@@ -1,5 +1,5 @@
 /**
- * Simple Session Management for TayyariAI
+ * Simple Session Management for TayyarAI
  * 
  * This provides a lightweight session system without external dependencies,
  * perfect for open-source projects.
@@ -7,9 +7,10 @@
 
 import { cookies } from 'next/headers';
 import { UserService } from '@/lib/database/services/userService';
+import { APP_METADATA } from '@/lib/config/metadata';
 import type { User } from '@/lib/database/schema';
 
-const SESSION_COOKIE_NAME = 'tayyari-session';
+const SESSION_COOKIE_NAME = APP_METADATA.sessionCookieName;
 const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
 
 export interface SessionUser {
