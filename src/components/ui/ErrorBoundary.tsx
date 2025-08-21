@@ -127,8 +127,8 @@ export function useErrorHandler() {
     // e.g., Sentry, LogRocket, etc.
     
     // Show user-friendly notification
-    if (window.showNotification) {
-      window.showNotification({
+    if ((window as any).showNotification) {
+      (window as any).showNotification({
         type: 'error',
         title: 'Something went wrong',
         message: 'We encountered an error. Please try again.',

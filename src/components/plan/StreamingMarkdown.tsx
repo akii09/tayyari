@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import MarkdownIt from "markdown-it";
 import mk from "markdown-it-katex";
 import mermaid from "mermaid";
-import hljs from "highlight.js/lib/common";
+import hljs from "highlight.js";
 import mila from "markdown-it-link-attributes";
 
 type Props = {
@@ -23,10 +23,13 @@ export function StreamingMarkdown({ content, speedMs = 8 }: Props) {
       breaks: true,
       highlight: (str, lang) => {
         let html = str;
-        if (lang && hljs.getLanguage(lang)) {
+        if (lang) {
           try {
             html = hljs.highlight(str, { language: lang }).value;
-          } catch {}
+          } catch {
+            // If language is not supported, just return the original string
+            html = str;
+          }
         }
         // Wrap each line for line numbers
         const lines = html.split("\n").map((l) => `<span class=\"line\">${l || "\u200B"}</span>`).join("\n");
