@@ -1,0 +1,21 @@
+This is a opensource and easy to use learning platform powerd by AI.
+
+So basically any oe wants to learn anything with AI and make AI as personal tutor who create plan for hat perticular learning journey and teaches you with keeping track of your all progress etc and be a personal tutor.
+
+
+
+Now for this we already created AI and also integrated SQlite DB for storing user info and details. now we can retrive that details and use for generating plan which is at the onboarding stage so basically while starting any new learning concept we need to create proper plan using AI which is again tottaly customizable.
+
+now in current system we have not configured multiple concept learning criteria that we need to complete now.
+
+so basicall while onboarding user can skip the selecting that learning concept -- stuff or can add..
+
+now as i mentioned current system is not capable for using multiple learning concepts.
+
+Create compherensive plan for AI inetgration and context and memory managable AI system.
+
+we are planing add support for use ollama, gemini, openai, claude, Mistral etc AI models API using AI-SDK https://ai-sdk.dev/docs/introduction.
+
+
+
+Also find better way for saving or storeing user context.
