@@ -7,7 +7,7 @@ Based on database analysis, here are the enabled providers:
 1. **Simple Test Provider** (OpenAI) - ❌ No API Key
 2. **Google Gemini** - ✅ Has API Key (`AIzaSyCGhRQSYv20yKukJaR7-o9k-QYnRKSUKMI`)
 3. **Ollama Local** - ⚠️ No API Key needed (uses local server)
-4. **Groq** - ✅ Has API Key (`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`)
+4. **Groq** - ✅ Has API Key (configured)
 
 ## Root Cause Analysis
 
@@ -131,7 +131,7 @@ curl http://localhost:11434/api/tags
 ### 3. Fix Groq
 
 1. Go to [Groq Console](https://console.groq.com/keys)
-2. Verify the API key: `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`
+2. Verify the API key: [CONFIGURED]
 3. Check rate limits and usage
 
 ### 4. Fix Simple Test Provider

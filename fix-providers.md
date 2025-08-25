@@ -27,7 +27,7 @@ Based on the database analysis, here are the current provider configurations and
 
 ### 3. **Groq** (Enabled)
 - **Status**: Enabled with API key configured  
-- **API Key**: `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`
+- **API Key**: [CONFIGURED]
 - **Issue**: Possible API key validation or rate limiting
 - **Solution**: Verify API key and check rate limits
 

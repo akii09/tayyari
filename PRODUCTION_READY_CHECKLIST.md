@@ -52,7 +52,7 @@ OPENAI_API_KEY="sk-..."
 ANTHROPIC_API_KEY="sk-ant-..."
 GOOGLE_API_KEY="AIza..."
 MISTRAL_API_KEY="..."
-GROQ_API_KEY="gsk_..."
+GROQ_API_KEY="[CONFIGURED]"
 PERPLEXITY_API_KEY="pplx-..."
 ```
 
