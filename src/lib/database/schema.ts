@@ -1,6 +1,107 @@
 import { sqliteTable, text, integer, real, blob } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
+// AI Providers table - stores AI provider configurations
+export const aiProviders = sqliteTable('ai_providers', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text('name').notNull(),
+  type: text('type').notNull(), // 'openai', 'claude', 'gemini', 'ollama', 'mistral'
+  enabled: integer('enabled', { mode: 'boolean' }).default(true),
+  priority: integer('priority').default(1),
+  config: text('config'), // JSON configuration
+  healthStatus: text('health_status').default('unknown'),
+  lastHealthCheck: text('last_health_check'),
+  totalRequests: integer('total_requests').default(0),
+  totalCost: real('total_cost').default(0),
+  createdAt: text('created_at').default(sql`(datetime('now'))`),
+  updatedAt: text('updated_at').default(sql`(datetime('now'))`),
+});
+
+// Learning Concepts table - stores learning concepts for users
+export const learningConcepts = sqliteTable('learning_concepts', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  description: text('description'),
+  category: text('category').notNull(),
+  difficulty: text('difficulty').notNull(),
+  estimatedHours: integer('estimated_hours'),
+  prerequisites: text('prerequisites'), // JSON array
+  learningObjectives: text('learning_objectives'), // JSON array
+  customPrompts: text('custom_prompts'), // JSON array
+  isActive: integer('is_active', { mode: 'boolean' }).default(true),
+  completionPercentage: real('completion_percentage').default(0),
+  currentModule: text('current_module'),
+  timeSpent: real('time_spent').default(0),
+  lastStudied: text('last_studied'),
+  createdAt: text('created_at').default(sql`(datetime('now'))`),
+  updatedAt: text('updated_at').default(sql`(datetime('now'))`),
+});
+
+// Milestones table - stores learning milestones for concepts
+export const milestones = sqliteTable('milestones', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  conceptId: text('concept_id').notNull().references(() => learningConcepts.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  description: text('description'),
+  type: text('type').notNull(), // 'progress', 'achievement', 'skill', 'completion'
+  targetValue: real('target_value'), // Target value for progress milestones
+  currentValue: real('current_value').default(0), // Current progress value
+  isCompleted: integer('is_completed', { mode: 'boolean' }).default(false),
+  completedAt: text('completed_at'),
+  priority: integer('priority').default(1), // 1 = high, 2 = medium, 3 = low
+  metadata: text('metadata'), // JSON metadata for additional data
+  createdAt: text('created_at').default(sql`(datetime('now'))`),
+  updatedAt: text('updated_at').default(sql`(datetime('now'))`),
+});
+
+// Context Embeddings table - stores vector embeddings for context
+export const contextEmbeddings = sqliteTable('context_embeddings', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  conceptId: text('concept_id').references(() => learningConcepts.id, { onDelete: 'cascade' }),
+  conversationId: text('conversation_id').references(() => conversations.id, { onDelete: 'cascade' }),
+  content: text('content').notNull(),
+  embedding: blob('embedding'), // Vector embedding
+  metadata: text('metadata'), // JSON metadata
+  relevanceScore: real('relevance_score'),
+  createdAt: text('created_at').default(sql`(datetime('now'))`),
+  updatedAt: text('updated_at').default(sql`(datetime('now'))`),
+});
+
+// Learning Plans table - stores personalized learning plans
+export const learningPlans = sqliteTable('learning_plans', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  description: text('description'),
+  concepts: text('concepts').notNull(), // JSON array of concept configurations
+  schedule: text('schedule'), // JSON schedule configuration
+  adaptiveSettings: text('adaptive_settings'), // JSON adaptive learning settings
+  isActive: integer('is_active', { mode: 'boolean' }).default(true),
+  createdAt: text('created_at').default(sql`(datetime('now'))`),
+  updatedAt: text('updated_at').default(sql`(datetime('now'))`),
+});
+
+// AI Request Logs table - stores AI request/response logs
+export const aiRequestLogs = sqliteTable('ai_request_logs', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  conversationId: text('conversation_id').references(() => conversations.id, { onDelete: 'cascade' }),
+  conceptId: text('concept_id').references(() => learningConcepts.id, { onDelete: 'cascade' }),
+  provider: text('provider').notNull(),
+  model: text('model').notNull(),
+  promptTokens: integer('prompt_tokens'),
+  completionTokens: integer('completion_tokens'),
+  totalTokens: integer('total_tokens'),
+  cost: real('cost'),
+  responseTime: integer('response_time'), // milliseconds
+  success: integer('success', { mode: 'boolean' }).default(true),
+  errorMessage: text('error_message'),
+  createdAt: text('created_at').default(sql`(datetime('now'))`),
+});
+
 // Users table - stores user onboarding and profile information
 export const users = sqliteTable('users', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -83,6 +184,12 @@ export const conversations = sqliteTable('conversations', {
   title: text('title'), // auto-generated or user-defined title
   context: text('context'), // 'general', 'dsa', 'system_design', 'behavioral', 'code_review'
   
+  // Multi-AI Context System additions
+  conceptId: text('concept_id').references(() => learningConcepts.id, { onDelete: 'set null' }),
+  aiProvider: text('ai_provider'), // which AI provider was used
+  contextSummary: text('context_summary'), // compressed context summary
+  totalCost: real('total_cost').default(0), // total cost for this conversation
+  
   // Metadata
   messageCount: integer('message_count').default(0),
   lastMessageAt: text('last_message_at'),
@@ -103,6 +210,12 @@ export const messages = sqliteTable('messages', {
   attachments: text('attachments'), // JSON array of file information
   tokens: integer('tokens'), // token count for AI messages
   model: text('model'), // AI model used for response
+  
+  // Multi-AI Context System additions
+  conceptId: text('concept_id').references(() => learningConcepts.id, { onDelete: 'set null' }),
+  contextUsed: text('context_used'), // JSON context metadata
+  cost: real('cost'), // cost for this specific message
+  processingTime: integer('processing_time'), // processing time in milliseconds
   
   // User Feedback
   feedback: text('feedback'), // 'positive', 'negative', null
@@ -176,6 +289,18 @@ export const userSettings = sqliteTable('user_settings', {
 });
 
 // Export types for TypeScript
+export type AIProvider = typeof aiProviders.$inferSelect;
+export type NewAIProvider = typeof aiProviders.$inferInsert;
+export type LearningConcept = typeof learningConcepts.$inferSelect;
+export type NewLearningConcept = typeof learningConcepts.$inferInsert;
+export type Milestone = typeof milestones.$inferSelect;
+export type NewMilestone = typeof milestones.$inferInsert;
+export type ContextEmbedding = typeof contextEmbeddings.$inferSelect;
+export type NewContextEmbedding = typeof contextEmbeddings.$inferInsert;
+export type LearningPlan = typeof learningPlans.$inferSelect;
+export type NewLearningPlan = typeof learningPlans.$inferInsert;
+export type AIRequestLog = typeof aiRequestLogs.$inferSelect;
+export type NewAIRequestLog = typeof aiRequestLogs.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type StudySession = typeof studySessions.$inferSelect;

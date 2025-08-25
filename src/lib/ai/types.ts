@@ -3,7 +3,7 @@
  * Defines the core types for multi-AI provider integration
  */
 
-export type AIProviderType = 'openai' | 'anthropic' | 'google' | 'mistral' | 'ollama';
+export type AIProviderType = 'openai' | 'anthropic' | 'google' | 'mistral' | 'ollama' | 'groq' | 'perplexity';
 
 export type AIProviderStatus = 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
 
@@ -21,6 +21,7 @@ export interface ProviderConfig {
   healthCheckInterval: number;
   timeout?: number;
   retryAttempts?: number;
+  config?: string; // Raw JSON config for reference
 }
 
 export interface ProviderHealthStatus {

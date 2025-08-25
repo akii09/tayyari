@@ -65,6 +65,10 @@ export class ProviderHealthChecker {
         return this.checkMistralHealth(config);
       case 'ollama':
         return this.checkOllamaHealth(config);
+      case 'groq':
+        return this.checkGroqHealth(config);
+      case 'perplexity':
+        return this.checkPerplexityHealth(config);
       default:
         throw new Error(`Unsupported provider type: ${config.type}`);
     }
@@ -121,19 +125,30 @@ export class ProviderHealthChecker {
     }
 
     try {
-      const client = google({
-        apiKey: config.apiKey,
+      // First, try to list available models to validate API key
+      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models', {
+        headers: {
+          'x-goog-api-key': config.apiKey,
+        },
       });
+
+      if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error('Invalid Google API key or insufficient permissions');
+        } else if (response.status === 429) {
+          throw new Error('Google API quota exceeded');
+        }
+        throw new Error(`Google API returned ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const availableModels = data.models?.map((model: any) => model.name.replace('models/', '')) || [];
       
-      const result = await generateText({
-        model: client(config.models[0] || 'gemini-1.5-flash'),
-        prompt: 'Hello',
-        maxTokens: 1,
-      });
-      
-      return { models: config.models };
+      // If we can list models, the API key is valid
+      return { models: availableModels.length > 0 ? availableModels : config.models };
     } catch (error) {
-      throw new Error(`Google health check failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Google health check failed: ${errorMessage}`);
     }
   }
 
@@ -166,7 +181,14 @@ export class ProviderHealthChecker {
 
     try {
       // Check if Ollama is running and get available models
-      const response = await fetch(`${config.baseUrl}/api/tags`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      
+      const response = await fetch(`${config.baseUrl}/api/tags`, {
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         throw new Error(`Ollama server returned ${response.status}: ${response.statusText}`);
@@ -175,18 +197,108 @@ export class ProviderHealthChecker {
       const data = await response.json();
       const availableModels = data.models?.map((model: any) => model.name) || [];
       
-      // Verify at least one configured model is available
-      const hasConfiguredModel = config.models.some(model => 
-        availableModels.some((available: string) => available.includes(model))
-      );
-      
-      if (!hasConfiguredModel && availableModels.length > 0) {
-        console.warn(`None of the configured Ollama models (${config.models.join(', ')}) are available. Available models: ${availableModels.join(', ')}`);
+      if (availableModels.length === 0) {
+        throw new Error('Ollama is running but no models are installed. Run: ollama pull llama3.1:8b');
       }
       
-      return { models: availableModels.length > 0 ? availableModels : config.models };
+      return { models: availableModels };
     } catch (error) {
-      throw new Error(`Ollama health check failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      if (error.name === 'AbortError') {
+        throw new Error('Ollama health check timed out - server may not be running. Try: ollama serve');
+      }
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('fetch failed')) {
+        throw new Error('Ollama server is not running. Start it with: ollama serve');
+      }
+      
+      throw new Error(`Ollama health check failed: ${errorMessage}`);
+    }
+  }
+
+  private async checkGroqHealth(config: ProviderConfig): Promise<{ models: string[] }> {
+    if (!config.apiKey) {
+      throw new Error('Groq API key not configured');
+    }
+
+    try {
+      // Groq uses OpenAI-compatible API
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      const response = await fetch('https://api.groq.com/openai/v1/models', {
+        headers: {
+          'Authorization': `Bearer ${config.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Invalid Groq API key');
+        } else if (response.status === 429) {
+          throw new Error('Groq API rate limit exceeded');
+        } else if (response.status === 403) {
+          throw new Error('Groq API access forbidden - check API key permissions');
+        }
+        
+        const errorText = await response.text().catch(() => 'Unknown error');
+        throw new Error(`Groq API returned ${response.status}: ${response.statusText}. ${errorText}`);
+      }
+
+      const data = await response.json();
+      const availableModels = data.data?.map((model: any) => model.id) || [];
+      
+      if (availableModels.length === 0) {
+        throw new Error('No models available from Groq API');
+      }
+      
+      return { models: availableModels };
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        throw new Error('Groq health check timed out');
+      }
+      
+      throw new Error(`Groq health check failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  private async checkPerplexityHealth(config: ProviderConfig): Promise<{ models: string[] }> {
+    if (!config.apiKey) {
+      throw new Error('Perplexity API key not configured');
+    }
+
+    try {
+      // Test with a simple completion request
+      const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${config.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: config.models[0] || 'llama-3.1-sonar-small-128k-online',
+          messages: [{ role: 'user', content: 'Hi' }],
+          max_tokens: 1,
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Invalid Perplexity API key');
+        } else if (response.status === 429) {
+          throw new Error('Perplexity API rate limit exceeded');
+        }
+        throw new Error(`Perplexity API returned ${response.status}: ${response.statusText}`);
+      }
+
+      return { models: config.models };
+    } catch (error) {
+      throw new Error(`Perplexity health check failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

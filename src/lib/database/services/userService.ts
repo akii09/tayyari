@@ -1,6 +1,41 @@
 import { eq, desc, and, sql } from 'drizzle-orm';
 import { db } from '../config';
-import { users, userSettings, userProgress, studySessions, type User, type NewUser, type NewUserSettings } from '../schema';
+import { users, userSettings, userProgress, studySessions, learningConcepts, type User, type NewUser, type NewUserSettings, type LearningConcept } from '../schema';
+import { LearningConceptService, type UserAnalytics } from './learningConceptService';
+
+// Types for enhanced user profile management
+export interface LearningStyleProfile {
+  primaryStyle: 'visual' | 'auditory' | 'kinesthetic' | 'reading' | 'mixed';
+  preferences: {
+    visualLearning: number; // 0-10 scale
+    auditoryLearning: number;
+    kinestheticLearning: number;
+    readingLearning: number;
+  };
+  adaptiveSettings: {
+    difficultyAdjustment: 'conservative' | 'moderate' | 'aggressive';
+    pacePreference: 'slow' | 'medium' | 'fast';
+    feedbackFrequency: 'minimal' | 'regular' | 'frequent';
+  };
+}
+
+export interface MultiConceptProfile {
+  activeConcepts: string[];
+  conceptPriorities: { [conceptId: string]: number }; // 1-10 priority scale
+  learningGoals: { [conceptId: string]: string };
+  timeAllocation: { [conceptId: string]: number }; // hours per week
+  crossConceptPreferences: {
+    enableInterdisciplinary: boolean;
+    preferredConnections: string[];
+  };
+}
+
+export interface EnhancedUserProfile extends User {
+  learningStyleProfile?: LearningStyleProfile;
+  multiConceptProfile?: MultiConceptProfile;
+  analytics?: UserAnalytics;
+  activeConcepts?: LearningConcept[];
+}
 
 export class UserService {
   // Create a new user with onboarding data
@@ -216,4 +251,394 @@ export class UserService {
       return false;
     }
   }
+
+  // Enhanced Multi-Concept Learning Support
+
+  /**
+   * Get enhanced user profile with learning concepts and analytics
+   */
+  static async getEnhancedUserProfile(userId: string): Promise<EnhancedUserProfile | null> {
+    try {
+      const user = await this.getUserById(userId);
+      if (!user) return null;
+
+      // Get user's active learning concepts
+      const activeConcepts = await LearningConceptService.getUserConcepts(userId, true);
+      
+      // Get user analytics
+      const analytics = await LearningConceptService.getUserAnalytics(userId);
+
+      // Parse learning style from user data
+      const learningStyleProfile = this.parseLearningStyleProfile(user);
+      
+      // Build multi-concept profile
+      const multiConceptProfile = this.buildMultiConceptProfile(activeConcepts, user);
+
+      return {
+        ...user,
+        learningStyleProfile,
+        multiConceptProfile,
+        analytics,
+        activeConcepts,
+      };
+    } catch (error) {
+      console.error('❌ Error fetching enhanced user profile:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Update user's learning style profile
+   */
+  static async updateLearningStyleProfile(userId: string, styleProfile: LearningStyleProfile): Promise<boolean> {
+    try {
+      const currentUser = await this.getUserById(userId);
+      if (!currentUser) return false;
+
+      // Store learning style in the learningStyle field and additional data in currentSkills
+      const currentSkills = currentUser.currentSkills ? JSON.parse(currentUser.currentSkills) : {};
+      currentSkills.learningStyleProfile = styleProfile;
+
+      await db
+        .update(users)
+        .set({
+          learningStyle: styleProfile.primaryStyle,
+          currentSkills: JSON.stringify(currentSkills),
+          updatedAt: sql`(datetime('now'))`,
+        })
+        .where(eq(users.id, userId));
+
+      console.log(`✅ Learning style profile updated for user: ${userId}`);
+      return true;
+    } catch (error) {
+      console.error('❌ Error updating learning style profile:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Add learning concept to user's active concepts
+   */
+  static async addLearningConcept(userId: string, conceptData: {
+    name: string;
+    description?: string;
+    category: string;
+    difficulty: 'beginner' | 'intermediate' | 'advanced';
+    estimatedHours?: number;
+    prerequisites?: string[];
+    learningObjectives?: string[];
+    priority?: number;
+    weeklyHours?: number;
+  }): Promise<LearningConcept | null> {
+    try {
+      // Validate prerequisites
+      if (conceptData.prerequisites && conceptData.prerequisites.length > 0) {
+        const validation = await LearningConceptService.validatePrerequisites(userId, 'temp');
+        // For new concepts, we'll check if the prerequisite concepts exist for the user
+        const userConcepts = await LearningConceptService.getUserConcepts(userId);
+        const userConceptNames = userConcepts.map(c => c.name.toLowerCase());
+        
+        const missingPrereqs = conceptData.prerequisites.filter(
+          prereq => !userConceptNames.includes(prereq.toLowerCase())
+        );
+
+        if (missingPrereqs.length > 0) {
+          console.warn(`⚠️ Missing prerequisites for concept ${conceptData.name}: ${missingPrereqs.join(', ')}`);
+        }
+      }
+
+      const newConcept = await LearningConceptService.createConcept({
+        userId,
+        name: conceptData.name,
+        description: conceptData.description || '',
+        category: conceptData.category,
+        difficulty: conceptData.difficulty,
+        estimatedHours: conceptData.estimatedHours || 10,
+        prerequisites: conceptData.prerequisites ? JSON.stringify(conceptData.prerequisites) : null,
+        learningObjectives: conceptData.learningObjectives ? JSON.stringify(conceptData.learningObjectives) : null,
+        customPrompts: JSON.stringify([]),
+        isActive: true,
+      });
+
+      // Update user's multi-concept profile
+      await this.updateMultiConceptProfile(userId, {
+        conceptId: newConcept.id,
+        priority: conceptData.priority || 5,
+        weeklyHours: conceptData.weeklyHours || 2,
+        learningGoal: `Master ${conceptData.name}`,
+      });
+
+      console.log(`✅ Learning concept added to user ${userId}: ${conceptData.name}`);
+      return newConcept;
+    } catch (error) {
+      console.error('❌ Error adding learning concept:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Update multi-concept profile settings
+   */
+  static async updateMultiConceptProfile(userId: string, conceptSettings: {
+    conceptId: string;
+    priority?: number;
+    weeklyHours?: number;
+    learningGoal?: string;
+  }): Promise<boolean> {
+    try {
+      const user = await this.getUserById(userId);
+      if (!user) return false;
+
+      const currentSkills = user.currentSkills ? JSON.parse(user.currentSkills) : {};
+      const multiConceptProfile = currentSkills.multiConceptProfile || {
+        activeConcepts: [],
+        conceptPriorities: {},
+        learningGoals: {},
+        timeAllocation: {},
+        crossConceptPreferences: {
+          enableInterdisciplinary: true,
+          preferredConnections: [],
+        },
+      };
+
+      // Update concept settings
+      if (!multiConceptProfile.activeConcepts.includes(conceptSettings.conceptId)) {
+        multiConceptProfile.activeConcepts.push(conceptSettings.conceptId);
+      }
+
+      if (conceptSettings.priority !== undefined) {
+        multiConceptProfile.conceptPriorities[conceptSettings.conceptId] = conceptSettings.priority;
+      }
+
+      if (conceptSettings.weeklyHours !== undefined) {
+        multiConceptProfile.timeAllocation[conceptSettings.conceptId] = conceptSettings.weeklyHours;
+      }
+
+      if (conceptSettings.learningGoal) {
+        multiConceptProfile.learningGoals[conceptSettings.conceptId] = conceptSettings.learningGoal;
+      }
+
+      currentSkills.multiConceptProfile = multiConceptProfile;
+
+      await db
+        .update(users)
+        .set({
+          currentSkills: JSON.stringify(currentSkills),
+          updatedAt: sql`(datetime('now'))`,
+        })
+        .where(eq(users.id, userId));
+
+      console.log(`✅ Multi-concept profile updated for user: ${userId}`);
+      return true;
+    } catch (error) {
+      console.error('❌ Error updating multi-concept profile:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get learning recommendations based on user profile and progress
+   */
+  static async getLearningRecommendations(userId: string): Promise<{
+    nextConcepts: string[];
+    reviewConcepts: string[];
+    interdisciplinaryOpportunities: string[];
+    timeOptimization: {
+      conceptId: string;
+      currentHours: number;
+      recommendedHours: number;
+      reason: string;
+    }[];
+  }> {
+    try {
+      const profile = await this.getEnhancedUserProfile(userId);
+      if (!profile) {
+        return {
+          nextConcepts: [],
+          reviewConcepts: [],
+          interdisciplinaryOpportunities: [],
+          timeOptimization: [],
+        };
+      }
+
+      const conceptRecommendations = await LearningConceptService.getLearningRecommendations(userId);
+      
+      // Time optimization recommendations
+      const timeOptimization: {
+        conceptId: string;
+        currentHours: number;
+        recommendedHours: number;
+        reason: string;
+      }[] = [];
+
+      if (profile.multiConceptProfile && profile.activeConcepts) {
+        for (const concept of profile.activeConcepts) {
+          const currentHours = profile.multiConceptProfile.timeAllocation[concept.id] || 2;
+          const progress = concept.completionPercentage || 0;
+          
+          let recommendedHours = currentHours;
+          let reason = 'Current allocation is appropriate';
+
+          if (progress < 20 && currentHours < 3) {
+            recommendedHours = currentHours + 1;
+            reason = 'Increase time to build momentum';
+          } else if (progress > 80 && currentHours > 2) {
+            recommendedHours = Math.max(1, currentHours - 1);
+            reason = 'Reduce time as concept nears completion';
+          } else if (profile.analytics?.strugglingConcepts.includes(concept.id)) {
+            recommendedHours = currentHours + 0.5;
+            reason = 'Additional time needed for struggling concept';
+          }
+
+          if (recommendedHours !== currentHours) {
+            timeOptimization.push({
+              conceptId: concept.id,
+              currentHours,
+              recommendedHours,
+              reason,
+            });
+          }
+        }
+      }
+
+      return {
+        ...conceptRecommendations,
+        timeOptimization,
+      };
+    } catch (error) {
+      console.error('❌ Error generating learning recommendations:', error);
+      return {
+        nextConcepts: [],
+        reviewConcepts: [],
+        interdisciplinaryOpportunities: [],
+        timeOptimization: [],
+      };
+    }
+  }
+
+  /**
+   * Track cross-concept learning session
+   */
+  static async trackCrossConceptSession(userId: string, sessionData: {
+    primaryConceptId: string;
+    relatedConceptIds: string[];
+    duration: number;
+    insights: string[];
+    connections: string[];
+  }): Promise<boolean> {
+    try {
+      // Update time spent for primary concept
+      await LearningConceptService.updateProgress(sessionData.primaryConceptId, {
+        timeSpent: sessionData.duration,
+      });
+
+      // Update cross-concept knowledge for related concepts
+      for (const relatedConceptId of sessionData.relatedConceptIds) {
+        for (const insight of sessionData.insights) {
+          await LearningConceptService.updateCrossConceptKnowledge(userId, relatedConceptId, insight);
+        }
+      }
+
+      // Update user's total study hours
+      const user = await this.getUserById(userId);
+      if (user) {
+        await db
+          .update(users)
+          .set({
+            totalStudyHours: (user.totalStudyHours || 0) + (sessionData.duration / 60),
+            updatedAt: sql`(datetime('now'))`,
+          })
+          .where(eq(users.id, userId));
+      }
+
+      console.log(`✅ Cross-concept session tracked for user: ${userId}`);
+      return true;
+    } catch (error) {
+      console.error('❌ Error tracking cross-concept session:', error);
+      return false;
+    }
+  }
+
+  // Helper Methods
+
+  /**
+   * Parse learning style profile from user data
+   */
+  private static parseLearningStyleProfile(user: User): LearningStyleProfile {
+    const defaultProfile: LearningStyleProfile = {
+      primaryStyle: 'mixed',
+      preferences: {
+        visualLearning: 5,
+        auditoryLearning: 5,
+        kinestheticLearning: 5,
+        readingLearning: 5,
+      },
+      adaptiveSettings: {
+        difficultyAdjustment: 'moderate',
+        pacePreference: 'medium',
+        feedbackFrequency: 'regular',
+      },
+    };
+
+    try {
+      if (user.currentSkills) {
+        const skills = JSON.parse(user.currentSkills);
+        if (skills.learningStyleProfile) {
+          return { ...defaultProfile, ...skills.learningStyleProfile };
+        }
+      }
+
+      // Infer from existing user data
+      if (user.learningStyle) {
+        defaultProfile.primaryStyle = user.learningStyle as any;
+      }
+
+      return defaultProfile;
+    } catch (error) {
+      console.error('❌ Error parsing learning style profile:', error);
+      return defaultProfile;
+    }
+  }
+
+  /**
+   * Build multi-concept profile from active concepts
+   */
+  private static buildMultiConceptProfile(activeConcepts: LearningConcept[], user: User): MultiConceptProfile {
+    const defaultProfile: MultiConceptProfile = {
+      activeConcepts: [],
+      conceptPriorities: {},
+      learningGoals: {},
+      timeAllocation: {},
+      crossConceptPreferences: {
+        enableInterdisciplinary: true,
+        preferredConnections: [],
+      },
+    };
+
+    try {
+      if (user.currentSkills) {
+        const skills = JSON.parse(user.currentSkills);
+        if (skills.multiConceptProfile) {
+          return { ...defaultProfile, ...skills.multiConceptProfile };
+        }
+      }
+
+      // Build from active concepts
+      defaultProfile.activeConcepts = activeConcepts.map(c => c.id);
+      
+      for (const concept of activeConcepts) {
+        defaultProfile.conceptPriorities[concept.id] = 5; // Default priority
+        defaultProfile.learningGoals[concept.id] = `Master ${concept.name}`;
+        defaultProfile.timeAllocation[concept.id] = 2; // Default 2 hours per week
+      }
+
+      return defaultProfile;
+    } catch (error) {
+      console.error('❌ Error building multi-concept profile:', error);
+      return defaultProfile;
+    }
+  }
 }
+
+// Export singleton instance for backward compatibility
+export const userService = new UserService();

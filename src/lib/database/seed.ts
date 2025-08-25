@@ -12,7 +12,93 @@
 
 import { UserService } from './services/userService';
 import { ChatService } from './services/chatService';
-import { initializeDatabase } from './config';
+import { initializeDatabase, db } from './config';
+import { aiProviders } from './schema';
+
+async function seedAIProviders() {
+  console.log('🤖 Seeding AI providers...');
+  
+  const defaultProviders = [
+    {
+      name: 'OpenAI GPT-4',
+      type: 'openai',
+      enabled: true,
+      priority: 1,
+      config: JSON.stringify({
+        model: 'gpt-4',
+        maxTokens: 4096,
+        temperature: 0.7,
+        apiKey: process.env.OPENAI_API_KEY || '',
+      }),
+      healthStatus: 'unknown',
+    },
+    {
+      name: 'Claude 3.5 Sonnet',
+      type: 'claude',
+      enabled: true,
+      priority: 2,
+      config: JSON.stringify({
+        model: 'claude-3-5-sonnet-20241022',
+        maxTokens: 4096,
+        temperature: 0.7,
+        apiKey: process.env.ANTHROPIC_API_KEY || '',
+      }),
+      healthStatus: 'unknown',
+    },
+    {
+      name: 'Gemini Pro',
+      type: 'gemini',
+      enabled: true,
+      priority: 3,
+      config: JSON.stringify({
+        model: 'gemini-pro',
+        maxTokens: 4096,
+        temperature: 0.7,
+        apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || '',
+      }),
+      healthStatus: 'unknown',
+    },
+    {
+      name: 'Ollama Llama 3.1',
+      type: 'ollama',
+      enabled: false, // Disabled by default as it requires local setup
+      priority: 4,
+      config: JSON.stringify({
+        model: 'llama3.1',
+        baseUrl: 'http://localhost:11434',
+        maxTokens: 4096,
+        temperature: 0.7,
+      }),
+      healthStatus: 'unknown',
+    },
+    {
+      name: 'Mistral Large',
+      type: 'mistral',
+      enabled: true,
+      priority: 5,
+      config: JSON.stringify({
+        model: 'mistral-large-latest',
+        maxTokens: 4096,
+        temperature: 0.7,
+        apiKey: process.env.MISTRAL_API_KEY || '',
+      }),
+      healthStatus: 'unknown',
+    },
+  ];
+
+  const createdProviders = [];
+  for (const providerData of defaultProviders) {
+    try {
+      const [provider] = await db.insert(aiProviders).values(providerData).returning();
+      createdProviders.push(provider);
+      console.log(`   ✅ Created AI provider: ${provider.name}`);
+    } catch (error) {
+      console.log(`   ❌ Failed to create provider: ${providerData.name}`);
+    }
+  }
+
+  return createdProviders;
+}
 
 async function seedUsers() {
   console.log('👥 Seeding sample users...');
@@ -254,11 +340,13 @@ async function main() {
     initializeDatabase();
 
     // Seed data
+    const providers = await seedAIProviders();
     const users = await seedUsers();
     await seedConversations(users);
 
     console.log('\n✅ Database seeding completed successfully!');
     console.log('\n📊 Sample data created:');
+    console.log('   - 5 AI providers (OpenAI, Claude, Gemini, Ollama, Mistral)');
     console.log('   - 3 sample users with different experience levels');
     console.log('   - 2 sample conversations with messages');
     console.log('   - User settings and preferences');

@@ -4,17 +4,47 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { SendIcon, AttachIcon, CodeIcon, MicIcon } from "@/components/icons/Icons";
 import { FileUpload } from "./FileUpload";
 import { CodeEditor } from "./CodeEditor";
+import { ConceptSwitcher } from "./ConceptSwitcher";
+import { AIProviderSelector } from "./AIProviderSelector";
 
 interface ChatInputProps {
   onSendMessage?: (message: string, files?: File[], code?: string) => void;
   isLoading?: boolean;
   placeholder?: string;
+  // Multi-concept support
+  concepts?: any[];
+  activeConcept?: any;
+  onConceptChange?: (concept: any) => void;
+  onAddConcept?: () => void;
+  isLoadingContext?: boolean;
+  contextStatus?: {
+    totalMessages: number;
+    relevantKnowledge: number;
+    lastUpdated: Date;
+  };
+  // AI provider support
+  aiProviders?: any[];
+  selectedProvider?: any;
+  onProviderChange?: (provider: any) => void;
+  onModelChange?: (model: string) => void;
+  onOpenProviderSettings?: () => void;
 }
 
 export function ChatInput({ 
   onSendMessage, 
   isLoading = false,
-  placeholder = "Type your request…"
+  placeholder = "Type your request…",
+  concepts = [],
+  activeConcept,
+  onConceptChange,
+  onAddConcept,
+  isLoadingContext = false,
+  contextStatus,
+  aiProviders = [],
+  selectedProvider,
+  onProviderChange,
+  onModelChange,
+  onOpenProviderSettings,
 }: ChatInputProps) {
   const [message, setMessage] = useState("");
   const [showFileUpload, setShowFileUpload] = useState(false);
@@ -120,6 +150,32 @@ export function ChatInput({
   return (
     <div className="sticky bottom-0 bg-bg-primary/95 backdrop-blur-sm p-4">
       <div className="mx-auto max-w-4xl space-y-4">
+        {/* Context Selectors */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Concept Switcher */}
+          {onConceptChange && onAddConcept && (
+            <ConceptSwitcher
+              concepts={concepts}
+              activeConcept={activeConcept}
+              onConceptChange={onConceptChange}
+              onAddConcept={onAddConcept}
+              isLoadingContext={isLoadingContext}
+              contextStatus={contextStatus}
+            />
+          )}
+
+          {/* AI Provider Selector */}
+          {onProviderChange && onOpenProviderSettings && (
+            <AIProviderSelector
+              providers={aiProviders}
+              selectedProvider={selectedProvider}
+              onProviderChange={onProviderChange}
+              onModelChange={onModelChange || (() => {})}
+              onOpenSettings={onOpenProviderSettings}
+              isLoading={isLoading}
+            />
+          )}
+        </div>
         {/* File Upload Section */}
         {showFileUpload && (
           <div ref={fileUploadRef}>

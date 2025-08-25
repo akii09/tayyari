@@ -1,18 +1,29 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
+import { useRouter } from "next/navigation";
+import { ChatLayout } from "@/components/chat/ChatLayout";
+import { ChatHeader } from "@/components/chat/ChatHeader";
+import { AppSidebar } from "@/components/chat/AppSidebar";
+import { MessagesArea } from "@/components/chat/MessagesArea";
 import { ChatInput } from "@/components/chat/ChatInput";
-import { ChatMessage } from "@/components/chat/ChatMessage";
 import { FloatingActions } from "@/components/shell/FloatingActions";
-import { CommandPalette, defaultCommands } from "@/components/ui/CommandPalette";
+import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
+
+// Lazy load heavy components
+const ConceptSwitcher = lazy(() => import("@/components/chat/ConceptSwitcher").then(m => ({ default: m.ConceptSwitcher })));
+const MultiConceptProgress = lazy(() => import("@/components/progress/MultiConceptProgress").then(m => ({ default: m.MultiConceptProgress })));
+const CommandPalette = lazy(() => import("@/components/ui/CommandPalette").then(m => ({ default: m.CommandPalette })));
+
+// Import defaultCommands separately to avoid lazy loading issues
+import { defaultCommands } from "@/components/ui/CommandPalette";
 
 import { useScreenReaderAnnouncement, useFocusManagement } from "@/components/ui/AccessibilityEnhancer";
 import { useFeatureDetection } from "@/components/ui/ProgressiveEnhancement";
 import { useErrorHandler } from "@/components/ui/ErrorBoundary";
-import { useNotifications, notificationUtils } from "@/components/ui/NotificationSystem";
-import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
-import { useAuth } from "@/lib/auth/AuthContext";
-import { useRouter } from "next/navigation";
+import { useNotifications } from "@/components/ui/NotificationSystem";
+import { useToast } from "@/components/ui/Toast";
+import { useAIModel } from "@/lib/ai/AIModelContext";
 
 interface Message {
   id: string;
@@ -21,208 +32,59 @@ interface Message {
   timestamp: Date;
   isStreaming?: boolean;
   files?: File[];
+  conceptId?: string;
+  model?: string;
+  provider?: string;
 }
 
-// Use static timestamps to prevent hydration mismatches
-const baseTime = new Date('2025-01-01T12:00:00Z');
-
-const initialMessages: Message[] = [
-  { 
-    id: "m1", 
-    role: "assistant", 
-    content: "Hello! I'm TayyarAI, your interview preparation assistant. I can help you with coding interviews, system design, behavioral questions, and much more. What would you like to prepare for today?",
-    timestamp: new Date(baseTime.getTime() - 5 * 60 * 1000) // 5 minutes before base
-  },
-  { 
-    id: "m2", 
-    role: "user", 
-    content: "Can you help me with React component optimization?",
-    timestamp: new Date(baseTime.getTime() - 3 * 60 * 1000) // 3 minutes before base
-  },
-  { 
-    id: "m3", 
-    role: "assistant", 
-    content: `Absolutely! React optimization is crucial for performance. Here are the key strategies:
-
-## 1. Memoization Techniques
-
-### Component Memoization
-- Use \`React.memo()\` for components to prevent unnecessary re-renders
-- Use \`useMemo()\` for expensive calculations  
-- Use \`useCallback()\` for function references
-
-\`\`\`typescript
-const OptimizedComponent = React.memo(({ data }) => {
-  const expensiveValue = useMemo(() => {
-    return data.reduce((acc, item) => acc + item.value, 0);
-  }, [data]);
-
-  return <div>{expensiveValue}</div>;
-});
-\`\`\`
-
-## 2. Code Splitting
-
-### Dynamic Imports
-\`\`\`javascript
-const LazyComponent = React.lazy(() => import('./Component'));
-
-function App() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <LazyComponent />
-    </Suspense>
-  );
-}
-\`\`\`
-
-## 3. State Management Best Practices
-
-> **Important**: Keep state as close as possible to where it's used
-
-| Strategy | Use Case | Performance Impact |
-|----------|----------|-------------------|
-| Local State | Component-specific data | ✅ High |
-| Context | Shared app state | ⚠️ Medium |
-| External Store | Complex state logic | ✅ High |
-
-### Example: State Optimization
-\`\`\`tsx
-// ❌ Bad: All components re-render when count changes
-function BadExample() {
-  const [count, setCount] = useState(0);
-  const [user, setUser] = useState(null);
-  
-  return (
-    <div>
-      <ExpensiveComponent user={user} />
-      <Counter count={count} setCount={setCount} />
-    </div>
-  );
+interface LearningConcept {
+  id: string;
+  name: string;
+  category: string;
+  completionPercentage: number;
+  isActive: boolean;
 }
 
-// ✅ Good: Separate concerns
-function GoodExample() {
-  const [user, setUser] = useState(null);
-  
-  return (
-    <div>
-      <ExpensiveComponent user={user} />
-      <CounterWrapper />
-    </div>
-  );
+interface UserProgress {
+  totalConcepts: number;
+  activeConcepts: number;
+  completedConcepts: number;
+  averageProgress: number;
+  totalTimeSpent: number;
 }
-\`\`\`
 
-Would you like me to dive deeper into any of these techniques?`,
-    timestamp: new Date(baseTime.getTime() - 2 * 60 * 1000) // 2 minutes before base
-  },
-];
+type SidebarView = 'concepts' | 'progress' | 'analytics' | 'settings';
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  // Core state
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  
+  // UI state
+  const [showSidebar, setShowSidebar] = useState(false);
+  const [sidebarView, setSidebarView] = useState<SidebarView>('concepts');
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-  const [hasError, setHasError] = useState(false);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Learning state
+  const [selectedConcept, setSelectedConcept] = useState<LearningConcept | null>(null);
+  const [userConcepts, setUserConcepts] = useState<LearningConcept[]>([]);
+  const [userProgress, setUserProgress] = useState<UserProgress | null>(null);
 
-  // Enhanced hooks
+  // Hooks
+  const router = useRouter();
   const { announce } = useScreenReaderAnnouncement();
   const { focusElement } = useFocusManagement();
   const featureDetection = useFeatureDetection();
   const { handleError } = useErrorHandler();
   const { showNotification } = useNotifications();
-  const router = useRouter();
+  const toast = useToast();
+  const { selectedModel, selectedProvider } = useAIModel();
 
-  // Auto-scroll to bottom when new messages arrive
+  // Initialize data on component mount
   useEffect(() => {
-    if (isAtBottom) {
-      scrollToBottom();
-    }
-  }, [messages]);
-
-  // Check if user is at bottom of chat
-  useEffect(() => {
-    const container = messagesContainerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      const atBottom = scrollTop + clientHeight >= scrollHeight - 100; // 100px threshold
-      setIsAtBottom(atBottom);
-    };
-
-    container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
+    initializeData();
   }, []);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handleSendMessage = async (content: string, files?: File[], code?: string) => {
-    try {
-      // Add user message
-      const userMessage: Message = {
-        id: `msg-${Date.now()}-user`,
-        role: "user",
-        content,
-        timestamp: new Date(),
-        files,
-      };
-
-      setMessages(prev => [...prev, userMessage]);
-      setIsLoading(true);
-      announce("Message sent", "polite");
-      
-      // Auto-scroll to bottom when user sends a message
-      setIsAtBottom(true);
-
-
-
-      // Simulate AI response with streaming
-      setTimeout(() => {
-        const aiMessage: Message = {
-          id: `msg-${Date.now()}-ai`,
-          role: "assistant",
-          content: generateMockResponse(content),
-          timestamp: new Date(),
-          isStreaming: true,
-        };
-
-        setMessages(prev => [...prev, aiMessage]);
-        setIsLoading(false);
-        announce("AI is responding", "polite");
-
-        // Stop streaming after a delay
-        setTimeout(() => {
-          setMessages(prev => 
-            prev.map(msg => 
-              msg.id === aiMessage.id ? { ...msg, isStreaming: false } : msg
-            )
-          );
-          announce("AI response complete", "polite");
-        }, 3000);
-      }, 1000);
-
-    } catch (error) {
-      setIsLoading(false);
-      setHasError(true);
-      handleError(error as Error, "sending message");
-      
-      showNotification(notificationUtils.error(
-        "Failed to send message",
-        "Please check your connection and try again",
-        [{
-          label: "Retry",
-          action: () => handleSendMessage(content, files, code),
-          style: "primary"
-        }]
-      ));
-    }
-  };
 
   // Command palette keyboard shortcut
   const handleGlobalKeyDown = useCallback((e: KeyboardEvent) => {
@@ -237,12 +99,197 @@ export default function ChatPage() {
     return () => document.removeEventListener('keydown', handleGlobalKeyDown);
   }, [handleGlobalKeyDown]);
 
+  const initializeData = async () => {
+    try {
+      // Fetch user concepts
+      const conceptsResponse = await fetch('/api/concepts');
+      if (conceptsResponse.ok) {
+        const conceptsData = await conceptsResponse.json();
+        if (conceptsData.success) {
+          setUserConcepts(conceptsData.concepts);
+          // Set first active concept as default
+          const activeConcept = conceptsData.concepts.find((c: LearningConcept) => c.isActive);
+          if (activeConcept) {
+            setSelectedConcept(activeConcept);
+          }
+        }
+      }
+
+      // Fetch user progress
+      const progressResponse = await fetch('/api/learning/analytics');
+      if (progressResponse.ok) {
+        const progressData = await progressResponse.json();
+        if (progressData.success) {
+          setUserProgress(progressData.analytics);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to initialize data:', error);
+    }
+  };
+
+  const handleSendMessage = async (content: string, files?: File[], code?: string) => {
+    try {
+      // Add user message immediately
+      const userMessage: Message = {
+        id: `msg-${Date.now()}-user`,
+        role: "user",
+        content,
+        timestamp: new Date(),
+        files,
+        conceptId: selectedConcept?.id,
+      };
+
+      setMessages(prev => [...prev, userMessage]);
+      setIsLoading(true);
+      announce("Message sent", "polite");
+
+      // Create conversation ID if not exists
+      const currentConversationId = conversationId || `conv-${Date.now()}`;
+      if (!conversationId) {
+        setConversationId(currentConversationId);
+      }
+
+      // Call the AI API with selected model and concept
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: content,
+          conversationId: currentConversationId,
+          conceptId: selectedConcept?.id,
+          preferredProvider: selectedProvider?.type,
+          maxTokens: 1000,
+          temperature: 0.7,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to get AI response');
+      }
+
+      // Ensure we have the expected message structure
+      if (!data.messages || data.messages.length < 2) {
+        throw new Error('Invalid response format from API');
+      }
+
+      // Add AI response
+      const aiMessage: Message = {
+        id: data.messages[1].id || `msg-${Date.now()}-ai`,
+        role: "assistant",
+        content: data.messages[1].content || 'Sorry, I encountered an error processing your request.',
+        timestamp: new Date(data.messages[1].timestamp || new Date().toISOString()),
+        isStreaming: false,
+        conceptId: selectedConcept?.id,
+        model: data.messages[1].model || 'unknown',
+        provider: data.messages[1].provider || 'unknown',
+      };
+
+      setMessages(prev => {
+        // Remove the user message we added optimistically and add both messages from API
+        const withoutOptimistic = prev.slice(0, -1);
+        return [
+          ...withoutOptimistic,
+          {
+            ...userMessage,
+            id: data.messages[0].id,
+            timestamp: new Date(data.messages[0].timestamp),
+          },
+          aiMessage,
+        ];
+      });
+
+      // Update conversation ID from response
+      if (data.conversationId && data.conversationId !== 'temp-conversation') {
+        setConversationId(data.conversationId);
+      }
+
+      setIsLoading(false);
+      announce("AI response received", "polite");
+
+      // Update concept progress if applicable
+      if (selectedConcept) {
+        updateConceptProgress(selectedConcept.id, 5); // 5 minutes of study time
+      }
+
+    } catch (error) {
+      setIsLoading(false);
+      handleError(error as Error, "sending message");
+      
+      // Remove the optimistic user message on error
+      setMessages(prev => prev.slice(0, -1));
+      
+      // Add error message to chat
+      const errorMessage: Message = {
+        id: `msg-${Date.now()}-error`,
+        role: "assistant",
+        content: `❌ **Error sending message**\n\n${error instanceof Error ? error.message : "Please check your connection and try again"}\n\n*You can try sending your message again or check your AI provider settings.*`,
+        timestamp: new Date(),
+        isStreaming: false,
+        model: 'error',
+        provider: 'system',
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+      
+      toast.error(
+        "Failed to send message",
+        error instanceof Error ? error.message : "Please check your connection and try again"
+      );
+    }
+  };
+
+  const updateConceptProgress = async (conceptId: string, timeSpent: number) => {
+    try {
+      await fetch('/api/concepts/progress', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conceptId,
+          timeSpent,
+          completionPercentage: Math.min((userProgress?.averageProgress || 0) + 1, 100),
+        }),
+      });
+      
+      // Refresh progress data
+      initializeData();
+    } catch (error) {
+      console.error('Failed to update concept progress:', error);
+    }
+  };
+
   const handleClearChat = () => {
     setMessages([]);
+    setConversationId(null);
   };
 
   const handleSettings = () => {
-    router.push('/settings');
+    setShowSidebar(true);
+    setSidebarView('settings');
+  };
+
+  const handleConceptSelect = (concept: LearningConcept) => {
+    setSelectedConcept(concept);
+    toast.success(`Switched to ${concept.name}`, "Now focusing on this learning concept");
+  };
+
+  const handleToggleSidebar = (view?: SidebarView) => {
+    if (view) {
+      setSidebarView(view);
+      setShowSidebar(true);
+    } else {
+      setShowSidebar(!showSidebar);
+    }
   };
 
   const handleExportChat = () => {
@@ -263,14 +310,11 @@ export default function ChatPage() {
     navigator.clipboard.writeText(content);
   };
 
-  const handleFeedback = (type: 'positive' | 'negative') => {
-    console.log(`Feedback: ${type}`);
+  const handleFeedback = (messageId: string, feedback: 'positive' | 'negative') => {
+    console.log(`Feedback for ${messageId}: ${feedback}`);
     // Implement feedback handling
   };
 
-
-
-  // Enhanced message action handlers - simplified without toast spam
   const handleEditMessage = (messageId: string) => {
     console.log(`Edit message ${messageId}`);
   };
@@ -294,6 +338,118 @@ export default function ChatPage() {
     console.log(`Reply to message ${messageId}`);
   };
 
+  // Memoized sidebar content to prevent unnecessary re-renders
+  const renderSidebarContent = useMemo(() => {
+    const LoadingFallback = () => (
+      <div className="p-4">
+        <LoadingSkeleton variant="card" lines={3} />
+      </div>
+    );
+
+    switch (sidebarView) {
+      case 'concepts':
+        return (
+          <Suspense fallback={<LoadingFallback />}>
+            <ConceptSwitcher
+              concepts={userConcepts}
+              selectedConcept={selectedConcept}
+              onConceptSelect={handleConceptSelect}
+            />
+          </Suspense>
+        );
+      
+      case 'progress':
+        return userProgress ? (
+          <Suspense fallback={<LoadingFallback />}>
+            <MultiConceptProgress
+              concepts={userConcepts}
+              analytics={userProgress}
+            />
+          </Suspense>
+        ) : (
+          <div className="text-center text-text-muted py-8">
+            Loading progress data...
+          </div>
+        );
+      
+      case 'analytics':
+        return (
+          <div className="space-y-4">
+            <div className="glass-card p-4 rounded-xl">
+              <h3 className="text-sm font-medium text-text-secondary mb-3">Learning Stats</h3>
+              {userProgress ? (
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-text-muted">Total Concepts</span>
+                    <span className="text-text-primary font-semibold">{userProgress.totalConcepts}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-text-muted">Active</span>
+                    <span className="text-electric-blue font-semibold">{userProgress.activeConcepts}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-text-muted">Completed</span>
+                    <span className="text-neon-green font-semibold">{userProgress.completedConcepts}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-text-muted">Avg Progress</span>
+                    <span className="text-text-primary font-semibold">{userProgress.averageProgress.toFixed(1)}%</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-text-muted text-sm">Loading analytics...</div>
+              )}
+            </div>
+          </div>
+        );
+      
+      case 'settings':
+        return (
+          <div className="space-y-4">
+            <div className="glass-card p-4 rounded-xl">
+              <h3 className="text-sm font-medium text-text-secondary mb-3">🤖 AI Provider</h3>
+              <div className="text-sm text-text-muted mb-3">
+                Current: {selectedProvider?.name || 'None selected'}
+              </div>
+              <button
+                onClick={() => router.push('/admin/ai-providers')}
+                className="w-full p-3 bg-electric-blue/20 hover:bg-electric-blue/30 rounded-lg transition-colors text-electric-blue text-sm font-medium border border-electric-blue/20"
+              >
+                Configure AI Providers
+              </button>
+            </div>
+            
+            <div className="glass-card p-4 rounded-xl">
+              <h3 className="text-sm font-medium text-text-secondary mb-3">🚀 Quick Actions</h3>
+              <div className="space-y-2">
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="w-full text-left p-3 hover:bg-white/10 rounded-lg transition-colors text-text-primary flex items-center gap-2"
+                >
+                  <span>📊</span> Dashboard
+                </button>
+                <button
+                  onClick={() => router.push('/admin')}
+                  className="w-full text-left p-3 hover:bg-white/10 rounded-lg transition-colors text-text-primary flex items-center gap-2"
+                >
+                  <span>⚙️</span> Admin Panel
+                </button>
+                <button
+                  onClick={handleExportChat}
+                  className="w-full text-left p-3 hover:bg-white/10 rounded-lg transition-colors text-text-primary flex items-center gap-2"
+                >
+                  <span>💾</span> Export Chat
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      
+      default:
+        return null;
+    }
+  }, [sidebarView, userConcepts, selectedConcept, userProgress, selectedProvider, router, handleConceptSelect, handleExportChat]);
+
   // Enhanced commands with actual functionality
   const enhancedCommands = defaultCommands.map(cmd => ({
     ...cmd,
@@ -314,130 +470,74 @@ export default function ChatPage() {
     }
   }));
 
-  const isCurrentlyStreaming = messages.some(msg => msg.isStreaming);
-
   return (
-    <div className="flex flex-col min-h-screen pl-20 sm:pl-24">
-      {/* Messages */}
-      <div 
-        ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto" 
-        id="messages-container"
-      >
-        <div className="mx-auto max-w-4xl px-4 py-6 space-y-6">
-          {messages.length === 0 ? (
-            <div className="text-center py-12">
-              <h2 className="text-xl font-semibold text-text-primary mb-2">
-                Start a new conversation
-              </h2>
-              <p className="text-text-muted">
-                Ask me anything about coding, system design, or development best practices.
-              </p>
-            </div>
-          ) : (
-            messages.map((message, index) => (
-              <div
-                key={message.id}
-                className={featureDetection.shouldUseAnimations() ? "animate-message-appear" : ""}
-                style={{ 
-                  animationDelay: featureDetection.shouldUseAnimations() ? `${index * 100}ms` : '0ms',
-                  animationFillMode: 'both'
-                }}
-              >
-                <ChatMessage
-                  role={message.role}
-                  content={message.content}
-                  isStreaming={message.isStreaming}
-                  files={message.files}
-                  timestamp={message.timestamp}
-                  onCopy={handleCopyMessage}
-                  onFeedback={handleFeedback}
-                  onEdit={() => handleEditMessage(message.id)}
-                  onShare={() => handleShareMessage(message.id)}
-                  onReact={() => handleReactToMessage(message.id)}
-                  onBookmark={() => handleBookmarkMessage(message.id)}
-                  onReply={() => handleReplyToMessage(message.id)}
-                />
-              </div>
-            ))
-          )}
-
-          {/* Enhanced Loading State */}
-          {isLoading && (
-            <div className="animate-message-appear">
-              <LoadingSkeleton variant="message" lines={3} />
-            </div>
-          )}
-          
-          {/* Scroll anchor */}
-          <div ref={messagesEndRef} />
-        </div>
-        
-        {/* Scroll to bottom padding */}
-        <div className="h-32" />
-      </div>
-
-      {/* Scroll to bottom button */}
-      {!isAtBottom && (
-        <button
-          onClick={scrollToBottom}
-          className="fixed bottom-24 right-8 glass-card p-3 rounded-full shadow-lg hover:scale-105 transition-all z-10"
-          title="Scroll to bottom"
+    <ChatLayout
+      sidebar={
+        <AppSidebar
+          currentView={sidebarView}
+          onViewChange={setSidebarView}
+          onClose={() => setShowSidebar(false)}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-text-secondary">
-            <path d="M7 13l5 5 5-5M7 6l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
-      )}
-
-      {/* Input */}
-      <ChatInput
-        onSendMessage={handleSendMessage}
+          {renderSidebarContent}
+        </AppSidebar>
+      }
+      header={
+        <ChatHeader
+          onSidebarToggle={() => setShowSidebar(!showSidebar)}
+          currentConcept={selectedConcept}
+          currentProvider={selectedProvider}
+          onConceptsClick={() => handleToggleSidebar('concepts')}
+          onProgressClick={() => handleToggleSidebar('progress')}
+          onAnalyticsClick={() => handleToggleSidebar('analytics')}
+          onSettingsClick={() => handleToggleSidebar('settings')}
+        />
+      }
+      input={
+        <ChatInput
+          onSendMessage={handleSendMessage}
+          isLoading={isLoading}
+        />
+      }
+      floatingActions={
+        <FloatingActions
+          progress={userProgress?.averageProgress || 0}
+          onClear={handleClearChat}
+          onExport={handleExportChat}
+          onSettings={handleSettings}
+          onConcepts={() => handleToggleSidebar('concepts')}
+          onProgress={() => handleToggleSidebar('progress')}
+          onAnalytics={() => handleToggleSidebar('analytics')}
+        />
+      }
+      sidebarOpen={showSidebar}
+      onSidebarToggle={() => setShowSidebar(!showSidebar)}
+    >
+      <MessagesArea
+        messages={messages}
         isLoading={isLoading}
-      />
-
-      {/* Floating Actions */}
-      <FloatingActions
-        progress={85}
-        onClear={handleClearChat}
-        onExport={handleExportChat}
-        onSettings={handleSettings}
+        selectedConcept={selectedConcept}
+        selectedProvider={selectedProvider}
+        onCopyMessage={handleCopyMessage}
+        onFeedback={handleFeedback}
+        onEditMessage={handleEditMessage}
+        onShareMessage={handleShareMessage}
+        onReactToMessage={handleReactToMessage}
+        onBookmarkMessage={handleBookmarkMessage}
+        onReplyToMessage={handleReplyToMessage}
+        onConceptsClick={() => handleToggleSidebar('concepts')}
+        onProgressClick={() => handleToggleSidebar('progress')}
       />
 
       {/* Command Palette */}
-      <CommandPalette
-        isOpen={isCommandPaletteOpen}
-        onClose={() => setIsCommandPaletteOpen(false)}
-        commands={enhancedCommands}
-      />
-
-
-    </div>
+      {isCommandPaletteOpen && (
+        <Suspense fallback={null}>
+          <CommandPalette
+            isOpen={isCommandPaletteOpen}
+            onClose={() => setIsCommandPaletteOpen(false)}
+            commands={enhancedCommands}
+          />
+        </Suspense>
+      )}
+    </ChatLayout>
   );
 }
-
-
-
-function generateMockResponse(userInput: string): string {
-  const responses = [
-    "Great question! Let me help you with that. Here's a comprehensive approach to solve this problem...",
-    "I understand what you're looking for. Based on best practices, I'd recommend the following strategy...",
-    "That's an interesting challenge. Let me break this down into manageable steps for you...",
-    "Perfect! This is a common scenario in development. Here's how I would approach it...",
-  ];
-
-  const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-  
-  // Add some relevant content based on keywords
-  if (userInput.toLowerCase().includes('react')) {
-    return `${randomResponse}\n\n**React Best Practices:**\n\n1. **Component Composition**: Break down complex components into smaller, reusable pieces\n2. **State Management**: Use local state when possible, lift state up when needed\n3. **Performance**: Implement memoization and lazy loading\n\n\`\`\`jsx\nfunction OptimizedComponent({ data }) {\n  const memoizedValue = useMemo(() => \n    expensiveCalculation(data), [data]\n  );\n  \n  return <div>{memoizedValue}</div>;\n}\n\`\`\`\n\nWould you like me to elaborate on any of these points?`;
-  }
-  
-  if (userInput.toLowerCase().includes('design') || userInput.toLowerCase().includes('system')) {
-    return `${randomResponse}\n\n**System Design Fundamentals:**\n\n- **Scalability**: Design for horizontal scaling\n- **Reliability**: Implement redundancy and fault tolerance\n- **Performance**: Optimize for latency and throughput\n- **Security**: Follow security best practices\n\nLet's dive deeper into your specific requirements!`;
-  }
-
-  return `${randomResponse}\n\nI'm here to help with any technical questions you might have. Feel free to share more details about your specific use case!`;
-}
-
-

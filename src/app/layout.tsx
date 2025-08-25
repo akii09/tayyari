@@ -6,7 +6,9 @@ import { HeaderDock } from "@/components/shell/HeaderDock";
 import { ProgressiveEnhancementProvider } from "@/components/ui/ProgressiveEnhancement";
 import { NotificationProvider } from "@/components/ui/NotificationSystem";
 import { AccessibilityEnhancer } from "@/components/ui/AccessibilityEnhancer";
+import { ToastProvider } from "@/components/ui/Toast";
 import { AuthProvider } from "@/lib/auth/AuthContext";
+import { AIModelProvider } from "@/lib/ai/AIModelContext";
 import { APP_METADATA, SEO_TEMPLATES, getCopyright } from "@/lib/config/metadata";
 import "./globals.css";
 
@@ -15,6 +17,11 @@ if (typeof window === 'undefined') {
   // Only run on server side
   import("@/lib/database/config").then(({ initializeDatabase }) => {
     initializeDatabase();
+  }).then(() => {
+    // Seed default AI providers
+    import("@/lib/ai/services/AIProviderService").then(({ aiProviderService }) => {
+      aiProviderService.seedDefaultProviders();
+    });
   }).catch(console.error);
 }
 
@@ -62,17 +69,21 @@ export default function RootLayout({
           suppressHydrationWarning={true}
         >
         <AuthProvider>
-          <ProgressiveEnhancementProvider>
-            <NotificationProvider>
-              <AccessibilityEnhancer>
-                <div className="min-h-screen flex flex-col">
-                  <HeaderDock />
-                  <main className="flex-1">{children}</main>
-                  <footer className="border-t border-white/5 text-center text-xs text-[var(--text-secondary)] py-4">{getCopyright()}</footer>
-                </div>
-              </AccessibilityEnhancer>
-            </NotificationProvider>
-          </ProgressiveEnhancementProvider>
+          <AIModelProvider>
+            <ProgressiveEnhancementProvider>
+              <NotificationProvider>
+                <ToastProvider>
+                  <AccessibilityEnhancer>
+                  <div className="min-h-screen flex flex-col">
+                    <HeaderDock />
+                    <main className="flex-1">{children}</main>
+                    <footer className="border-t border-white/5 text-center text-xs text-[var(--text-secondary)] py-4">{getCopyright()}</footer>
+                  </div>
+                </AccessibilityEnhancer>
+                </ToastProvider>
+              </NotificationProvider>
+            </ProgressiveEnhancementProvider>
+          </AIModelProvider>
         </AuthProvider>
       </body>
     </html>

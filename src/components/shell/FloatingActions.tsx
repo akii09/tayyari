@@ -14,28 +14,52 @@ interface FloatingActionsProps {
   onClear?: () => void;
   onExport?: () => void;
   onSettings?: () => void;
+  onConcepts?: () => void;
+  onProgress?: () => void;
+  onAnalytics?: () => void;
 }
 
 export function FloatingActions({ 
   progress = 83, 
   onClear, 
   onExport, 
-  onSettings 
+  onSettings,
+  onConcepts,
+  onProgress,
+  onAnalytics
 }: FloatingActionsProps) {
   const [showMenu, setShowMenu] = useState(false);
 
   const menuItems = [
     { 
-      label: "Clear Chat", 
-      icon: <ClearIcon size={16} />, 
-      action: onClear, 
-      color: "text-red-400 hover:text-red-300" 
+      label: "Learning Concepts", 
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      ), 
+      action: onConcepts, 
+      color: "text-electric-blue hover:text-blue-300" 
     },
     { 
-      label: "Export Chat", 
-      icon: <ExportIcon size={16} />, 
-      action: onExport, 
-      color: "text-blue-400 hover:text-blue-300" 
+      label: "Progress Overview", 
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      ), 
+      action: onProgress, 
+      color: "text-neon-green hover:text-green-300" 
+    },
+    { 
+      label: "Analytics", 
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M3 3v18h18M9 9l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      ), 
+      action: onAnalytics, 
+      color: "text-purple-400 hover:text-purple-300" 
     },
     { 
       label: "Settings", 
@@ -44,10 +68,16 @@ export function FloatingActions({
       color: "text-gray-400 hover:text-gray-300" 
     },
     { 
-      label: "Search", 
-      icon: <SearchIcon size={16} />, 
-      action: () => {}, 
-      color: "text-purple-400 hover:text-purple-300" 
+      label: "Export Chat", 
+      icon: <ExportIcon size={16} />, 
+      action: onExport, 
+      color: "text-blue-400 hover:text-blue-300" 
+    },
+    { 
+      label: "Clear Chat", 
+      icon: <ClearIcon size={16} />, 
+      action: onClear, 
+      color: "text-red-400 hover:text-red-300" 
     },
   ];
 
