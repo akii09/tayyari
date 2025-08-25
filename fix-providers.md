@@ -21,7 +21,7 @@ Based on the database analysis, here are the current provider configurations and
 
 ### 2. **Google Gemini** (Enabled)
 - **Status**: Enabled with API key configured
-- **API Key**: `AIzaSyCGhRQSYv20yKukJaR7-o9k-QYnRKSUKMI`
+- **API Key**: [CONFIGURED]
 - **Issue**: Possible API key validation or quota issues
 - **Solution**: Verify API key permissions and quota
 

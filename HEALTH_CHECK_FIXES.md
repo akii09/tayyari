@@ -5,7 +5,7 @@
 Based on database analysis, here are the enabled providers:
 
 1. **Simple Test Provider** (OpenAI) - ❌ No API Key
-2. **Google Gemini** - ✅ Has API Key (`AIzaSyCGhRQSYv20yKukJaR7-o9k-QYnRKSUKMI`)
+2. **Google Gemini** - ✅ Has API Key (configured)
 3. **Ollama Local** - ⚠️ No API Key needed (uses local server)
 4. **Groq** - ✅ Has API Key (configured)
 
@@ -124,7 +124,7 @@ curl http://localhost:11434/api/tags
 ### 2. Fix Google Gemini
 
 1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey)
-2. Verify the API key: `AIzaSyCGhRQSYv20yKukJaR7-o9k-QYnRKSUKMI`
+2. Verify the API key: [CONFIGURED]
 3. Check if it has proper permissions for Generative AI
 4. Verify quota limits
 
