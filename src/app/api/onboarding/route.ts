@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth/session';
+import { requireAuth, createSession } from '@/lib/auth/session';
 import { UserService } from '@/lib/database/services/userService';
+import { OnboardingManager } from '@/lib/database/services/onboardingManager';
 import type { InterviewTypeKey } from '@/data/onboarding';
 
 export interface OnboardingData {
@@ -23,72 +24,85 @@ export interface OnboardingData {
   currentSkills?: Record<string, number>;
   weakAreas?: string[];
   strongAreas?: string[];
+
+  // Enhanced onboarding support
+  selectedConcepts?: string[];
+  skipConceptSelection?: boolean;
 }
 
 /**
- * Save onboarding data
+ * Save onboarding data (Legacy support - redirects to new enhanced flow)
  * 
  * POST /api/onboarding
  * Body: OnboardingData
  */
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAuth();
     const body: OnboardingData = await request.json();
     
     // Validate required fields
-    if (!body.name || !body.role || !body.experienceLevel || !body.interviewType) {
+    if (!body.name || !body.role || !body.experienceLevel) {
       return NextResponse.json(
         { error: 'Missing required onboarding data' },
         { status: 400 }
       );
     }
 
-    // Compute additional data based on selections
-    const computedData = computeOnboardingData(body);
+    // Check if user is authenticated, if not create a new user
+    let userId: string;
+    try {
+      const user = await requireAuth();
+      userId = user.id;
+    } catch (authError) {
+      // Create a new user for onboarding
+      const newUser = await UserService.createUser({
+        name: body.name,
+        role: body.role,
+        experienceLevel: body.experienceLevel,
+        hoursPerWeek: body.hoursPerWeek || 10,
+        targetDate: body.targetDate,
+        onboardingCompleted: false,
+      });
+      userId = newUser.id;
+      
+      // Create session for the new user
+      await createSession(newUser);
+    }
+
+    // Use the enhanced onboarding system
+    const session = await OnboardingManager.startOnboarding(userId);
     
-    // Update user with onboarding data
-    const success = await UserService.completeOnboarding(user.id, {
+    // Convert data to new format, consolidating preferences from step 3
+    const enhancedData = {
       name: body.name,
       role: body.role,
       experienceLevel: body.experienceLevel,
       targetDate: body.targetDate,
       hoursPerWeek: body.hoursPerWeek,
-      
-      // Store as JSON strings
-      interviewTypes: JSON.stringify([body.interviewType]),
-      targetCompanies: JSON.stringify(computedData.targetCompanies),
-      targetRoles: JSON.stringify(computedData.targetRoles),
-      currentSkills: JSON.stringify(computedData.currentSkills),
-      weakAreas: JSON.stringify(computedData.weakAreas),
-      strongAreas: JSON.stringify(computedData.strongAreas),
-      notificationPreferences: JSON.stringify(body.preferences),
-      
-      // Computed preferences
-      difficultyPreference: computedData.difficultyPreference,
-      learningStyle: computedData.learningStyle,
-    });
+      selectedConcepts: body.selectedConcepts,
+      skipConceptSelection: body.skipConceptSelection || !body.selectedConcepts?.length,
+      // Consolidate preferences - use data from step 3 (goals/timeline) instead of step 4
+      notificationPreferences: {
+        difficulty: body.experienceLevel === 'beginner' ? 'easy' : body.experienceLevel === 'intermediate' ? 'medium' : 'hard',
+        learningStyle: body.experienceLevel === 'beginner' ? 'visual' : 'hands-on',
+        studyReminders: true,
+        weeklyReports: true,
+        ...body.preferences, // Allow override if preferences are provided
+      },
+    };
 
-    if (!success) {
-      return NextResponse.json(
-        { error: 'Failed to save onboarding data' },
-        { status: 500 }
-      );
-    }
+    // Complete onboarding with enhanced system
+    const result = await OnboardingManager.completeOnboarding(session.id, enhancedData);
 
     return NextResponse.json({
       success: true,
       message: 'Onboarding completed successfully',
-      roadmap: generateRoadmap(body.interviewType, body.hoursPerWeek),
+      user: result.user,
+      concepts: result.concepts,
+      learningPlan: result.learningPlan,
+      roadmap: body.interviewType ? generateRoadmap(body.interviewType, body.hoursPerWeek) : null,
     });
   } catch (error) {
-    if (error instanceof Error && error.message === 'Authentication required') {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-    
     console.error('Onboarding save error:', error);
     return NextResponse.json(
       { error: 'Failed to save onboarding data' },

@@ -23,7 +23,7 @@ export async function GET() {
         lastChecked: new Date().toISOString(),
       },
       application: {
-        name: 'TayyariAI',
+        name: 'TayyarAI',
         version: '1.0.0',
         environment: process.env.NODE_ENV || 'development',
       }

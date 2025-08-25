@@ -15,6 +15,20 @@
       "when": 1755762278411,
       "tag": "0001_tranquil_meltdown",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1756109544190,
+      "tag": "0002_lowly_photon",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1756137731495,
+      "tag": "0003_loose_dreadnoughts",
+      "breakpoints": true
     }
   ]
 }

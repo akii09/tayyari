@@ -122,7 +122,7 @@ export function PrivacySettings() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `tayyari-data-export-${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `tayyarai-data-export-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -243,7 +243,7 @@ export function PrivacySettings() {
             enabled={settings.analyticsOptIn}
             onChange={() => handleToggle('analyticsOptIn')}
             label="Usage Analytics"
-            description="Help improve TayyariAI by sharing anonymous usage data"
+            description="Help improve TayyarAI by sharing anonymous usage data"
           />
           <ToggleSwitch
             enabled={settings.anonymizeData}
@@ -309,7 +309,7 @@ export function PrivacySettings() {
         <h4 className="font-medium text-text-primary mb-2">Privacy Summary</h4>
         <div className="text-sm text-text-muted">
           <p className="mb-2">
-            <strong>TayyariAI is committed to protecting your privacy.</strong> We only collect data necessary to provide you with a personalized learning experience.
+            <strong>TayyarAI is committed to protecting your privacy.</strong> We only collect data necessary to provide you with a personalized learning experience.
           </p>
           <ul className="space-y-1">
             <li>• Your study progress and chat history are stored locally in our database</li>

@@ -135,7 +135,7 @@ export function NotificationSettings() {
       <div>
         <h2 className="text-xl font-semibold text-text-primary mb-2">Notification Settings</h2>
         <p className="text-text-secondary">
-          Manage how and when you receive notifications from TayyariAI.
+          Manage how and when you receive notifications from TayyarAI.
         </p>
       </div>
 

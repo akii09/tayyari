@@ -6,14 +6,17 @@ export interface MessageRequest {
   conversationId: string;
   content: string;
   attachments?: any[];
-  model?: string;
+  conceptId?: string;
+  preferredProvider?: string;
+  maxTokens?: number;
+  temperature?: number;
 }
 
 /**
- * Add a message to a conversation
+ * Add a message to a conversation with AI-powered response
  * 
  * POST /api/chat/messages
- * Body: { conversationId: string, content: string, attachments?: any[], model?: string }
+ * Body: { conversationId: string, content: string, attachments?: any[], conceptId?: string, preferredProvider?: string, maxTokens?: number, temperature?: number }
  */
 export async function POST(request: NextRequest) {
   try {
@@ -42,40 +45,88 @@ export async function POST(request: NextRequest) {
       role: 'user',
       content: body.content,
       attachments: body.attachments ? JSON.stringify(body.attachments) : null,
+      conceptId: body.conceptId || chatData.conversation.conceptId || null,
     });
     
-    // Generate AI response (simplified for demo)
-    const aiResponse = await generateAIResponse(body.content, chatData.conversation.context || 'general');
-    
-    // Add AI message
-    const aiMessage = await ChatService.addMessage({
-      conversationId: body.conversationId,
-      role: 'assistant',
-      content: aiResponse.content,
-      tokens: aiResponse.tokens,
-      model: body.model || 'tayyari-ai-v1',
-    });
-    
-    return NextResponse.json({
-      success: true,
-      messages: [
+    try {
+      // Generate AI response using the enhanced system
+      const aiResult = await ChatService.generateAIResponse(
+        body.conversationId,
+        body.content,
         {
-          id: userMessage.id,
-          role: userMessage.role,
-          content: userMessage.content,
-          attachments: userMessage.attachments ? JSON.parse(userMessage.attachments) : null,
-          createdAt: userMessage.createdAt,
-        },
-        {
-          id: aiMessage.id,
-          role: aiMessage.role,
-          content: aiMessage.content,
-          tokens: aiMessage.tokens,
-          model: aiMessage.model,
-          createdAt: aiMessage.createdAt,
-        },
-      ],
-    });
+          conceptId: body.conceptId || chatData.conversation.conceptId || undefined,
+          preferredProvider: body.preferredProvider,
+          maxTokens: body.maxTokens,
+          temperature: body.temperature,
+        }
+      );
+      
+      return NextResponse.json({
+        success: true,
+        messages: [
+          {
+            id: userMessage.id,
+            role: userMessage.role,
+            content: userMessage.content,
+            attachments: userMessage.attachments ? JSON.parse(userMessage.attachments) : null,
+            conceptId: userMessage.conceptId,
+            createdAt: userMessage.createdAt,
+          },
+          {
+            id: aiResult.response.id,
+            role: aiResult.response.role,
+            content: aiResult.response.content,
+            tokens: aiResult.response.tokens,
+            model: aiResult.response.model,
+            conceptId: aiResult.response.conceptId,
+            cost: aiResult.response.cost,
+            processingTime: aiResult.response.processingTime,
+            providerInfo: aiResult.response.providerInfo,
+            contextInfo: aiResult.response.contextInfo,
+            createdAt: aiResult.response.createdAt,
+          },
+        ],
+        contextInfo: aiResult.contextInfo,
+      });
+    } catch (aiError) {
+      console.error('AI response generation failed:', aiError);
+      
+      // Fallback to simple response if AI fails
+      const fallbackResponse = await generateFallbackResponse(body.content, chatData.conversation.context || 'general');
+      
+      const aiMessage = await ChatService.addMessage({
+        conversationId: body.conversationId,
+        role: 'assistant',
+        content: fallbackResponse.content,
+        tokens: fallbackResponse.tokens,
+        model: 'fallback-v1',
+        conceptId: body.conceptId || chatData.conversation.conceptId || null,
+      });
+      
+      return NextResponse.json({
+        success: true,
+        messages: [
+          {
+            id: userMessage.id,
+            role: userMessage.role,
+            content: userMessage.content,
+            attachments: userMessage.attachments ? JSON.parse(userMessage.attachments) : null,
+            conceptId: userMessage.conceptId,
+            createdAt: userMessage.createdAt,
+          },
+          {
+            id: aiMessage.id,
+            role: aiMessage.role,
+            content: aiMessage.content,
+            tokens: aiMessage.tokens,
+            model: aiMessage.model,
+            conceptId: aiMessage.conceptId,
+            createdAt: aiMessage.createdAt,
+          },
+        ],
+        warning: 'AI response generated using fallback system',
+      });
+    }
   } catch (error) {
     if (error instanceof Error && error.message === 'Authentication required') {
       return NextResponse.json(
@@ -154,10 +205,9 @@ export async function PUT(request: NextRequest) {
 }
 
 /**
- * Simple AI response generator
- * In production, this would call your actual AI service
+ * Fallback AI response generator when main AI system fails
  */
-async function generateAIResponse(userMessage: string, context: string): Promise<{
+async function generateFallbackResponse(userMessage: string, context: string): Promise<{
   content: string;
   tokens: number;
 }> {

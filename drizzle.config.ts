@@ -5,7 +5,7 @@ export default {
   out: './src/lib/database/migrations',
   dialect: 'sqlite',
   dbCredentials: {
-    url: process.env.DATABASE_PATH || './data/tayyari.db',
+    url: process.env.DATABASE_PATH || './data/tayyarai.db',
   },
   verbose: true,
   strict: true,

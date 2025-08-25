@@ -32,27 +32,27 @@
 /* CSS variables for backward compatibility */
 :root {
   /* Primary */
-  --electric-blue: theme(colors.electric-blue);
-  --neon-green: theme(colors.neon-green);
-  --deep-purple: theme(colors.deep-purple);
+  --electric-blue: #0066FF;
+  --neon-green: #00FF88;
+  --deep-purple: #6366F1;
 
   /* Backgrounds */
-  --bg-primary: theme(colors.bg-primary);
-  --bg-secondary: theme(colors.bg-secondary);
-  --bg-tertiary: theme(colors.bg-tertiary);
-  --bg-elevated: theme(colors.bg-elevated);
+  --bg-primary: #0A0A0B;
+  --bg-secondary: #161618;
+  --bg-tertiary: #242428;
+  --bg-elevated: #2A2A2E;
 
   /* Text */
-  --text-primary: theme(colors.text-primary);
-  --text-secondary: theme(colors.text-secondary);
-  --text-muted: theme(colors.text-muted);
-  --text-accent: theme(colors.text-accent);
+  --text-primary: #FFFFFF;
+  --text-secondary: #B4B4B8;
+  --text-muted: #8A8A8F;
+  --text-accent: #E5E5E7;
 
   /* Accents */
-  --success: theme(colors.success);
-  --warning: theme(colors.warning);
-  --error: theme(colors.error);
-  --info: theme(colors.info);
+  --success: #10B981;
+  --warning: #F59E0B;
+  --error: #EF4444;
+  --info: #3B82F6;
 
   /* Glass effect */
   --glass-bg: rgba(22, 22, 24, 0.8);
@@ -441,6 +441,25 @@ button:focus-visible,
     min-height: 44px;
     min-width: 44px;
   }
+  
+  /* Larger touch targets for mobile */
+  .touch-target {
+    min-height: 48px;
+    min-width: 48px;
+    padding: 12px;
+  }
+  
+  /* Increase spacing on mobile */
+  .mobile-spacing {
+    gap: 16px;
+    padding: 16px;
+  }
+  
+  /* Larger text on mobile */
+  .mobile-text {
+    font-size: 16px;
+    line-height: 1.5;
+  }
 }
 
 /* Loading State Accessibility */
@@ -559,6 +578,35 @@ button:focus-visible,
 
 /* KaTeX support */
 @import "katex/dist/katex.min.css" layer(katex);
+
+/* Tailwind CSS custom classes */
+.bg-bg-primary { background-color: var(--bg-primary); }
+.bg-bg-secondary { background-color: var(--bg-secondary); }
+.bg-bg-tertiary { background-color: var(--bg-tertiary); }
+.bg-bg-elevated { background-color: var(--bg-elevated); }
+
+.text-text-primary { color: var(--text-primary); }
+.text-text-secondary { color: var(--text-secondary); }
+.text-text-muted { color: var(--text-muted); }
+.text-text-accent { color: var(--text-accent); }
+
+.text-electric-blue { color: var(--electric-blue); }
+.text-neon-green { color: var(--neon-green); }
+.text-deep-purple { color: var(--deep-purple); }
+
+.bg-electric-blue { background-color: var(--electric-blue); }
+.bg-neon-green { background-color: var(--neon-green); }
+.bg-deep-purple { background-color: var(--deep-purple); }
+
+.text-success { color: var(--success); }
+.text-warning { color: var(--warning); }
+.text-error { color: var(--error); }
+.text-info { color: var(--info); }
+
+.bg-success { background-color: var(--success); }
+.bg-warning { background-color: var(--warning); }
+.bg-error { background-color: var(--error); }
+.bg-info { background-color: var(--info); }
 
 /* Glass morphism card */
 .glass-card {
