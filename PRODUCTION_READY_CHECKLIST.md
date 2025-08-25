@@ -44,16 +44,16 @@
 ```env
 # Required for production
 DATABASE_URL="file:./data/app.db"
-NEXTAUTH_SECRET="your-production-secret"
+NEXTAUTH_SECRET="[CONFIGURED]"
 NEXTAUTH_URL="https://your-domain.com"
 
 # AI Provider Keys (configure as needed)
-OPENAI_API_KEY="sk-..."
-ANTHROPIC_API_KEY="sk-ant-..."
-GOOGLE_API_KEY="AIza..."
+OPENAI_API_KEY="[CONFIGURED]"
+ANTHROPIC_API_KEY="[CONFIGURED]"
+GOOGLE_API_KEY="[CONFIGURED]"
 MISTRAL_API_KEY="..."
 GROQ_API_KEY="[CONFIGURED]"
-PERPLEXITY_API_KEY="pplx-..."
+PERPLEXITY_API_KEY="[CONFIGURED]"
 ```
 
 ### Deployment Commands

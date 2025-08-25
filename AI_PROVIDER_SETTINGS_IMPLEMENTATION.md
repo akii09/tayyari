@@ -96,17 +96,17 @@ interface ProviderStatus {
 
 ### Per-Provider Settings
 1. **OpenAI**
-   - API Key (sk-...)
+   - API Key ([CONFIGURED])
    - Enable/Disable toggle
    - Models: GPT-4o, GPT-4o-mini, GPT-3.5-turbo
 
 2. **Anthropic**
-   - API Key (sk-ant-...)
+   - API Key ([CONFIGURED])
    - Enable/Disable toggle
    - Models: Claude 3.5 Sonnet, Claude 3 Haiku
 
 3. **Google**
-   - API Key (AIza...)
+   - API Key ([CONFIGURED])
    - Enable/Disable toggle
    - Models: Gemini 1.5 Pro, Gemini 1.5 Flash
 
@@ -132,7 +132,7 @@ interface ProviderStatus {
 
 // Server-side (full key for operations)
 {
-  apiKey: 'sk-actual-api-key-here',
+  apiKey: '[CONFIGURED]',
   // ... other config
 }
 ```
@@ -173,7 +173,7 @@ interface ProviderStatus {
 // User configures OpenAI
 {
   id: 'openai-provider',
-  apiKey: 'sk-user-provided-key',
+  apiKey: '[CONFIGURED]',
   enabled: true,
   // ... other settings
 }

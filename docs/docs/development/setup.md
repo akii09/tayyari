@@ -40,9 +40,9 @@ NEXTAUTH_SECRET="your-secret-key"
 NEXTAUTH_URL="http://localhost:3000"
 
 # AI Providers (optional)
-OPENAI_API_KEY="sk-..."
-ANTHROPIC_API_KEY="sk-ant-..."
-GOOGLE_API_KEY="AIza..."
+OPENAI_API_KEY="[CONFIGURED]"
+ANTHROPIC_API_KEY="[CONFIGURED]"
+GOOGLE_API_KEY="[CONFIGURED]"
 ```
 
 4. **Initialize the database**

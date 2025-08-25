@@ -59,7 +59,7 @@ Create a new AI provider configuration.
   "maxRequestsPerMinute": 60,
   "maxCostPerDay": 10,
   "models": ["gpt-4o", "gpt-4o-mini"],
-  "apiKey": "sk-...",
+  "apiKey": "[CONFIGURED]",
   "timeout": 30000,
   "retryAttempts": 3
 }
@@ -496,7 +496,7 @@ curl -X POST /api/ai/providers \
     "type": "openai",
     "enabled": true,
     "priority": 1,
-    "apiKey": "sk-...",
+    "apiKey": "[CONFIGURED]",
     "maxCostPerDay": 10
   }'
 ```

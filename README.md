@@ -81,9 +81,9 @@ DATABASE_URL="file:./data/app.db"
 NEXTAUTH_SECRET="your-secret-key"
 
 # AI Providers (add your API keys)
-OPENAI_API_KEY="sk-..."
-ANTHROPIC_API_KEY="sk-ant-..."
-GOOGLE_API_KEY="AIza..."
+OPENAI_API_KEY="[CONFIGURED]"
+ANTHROPIC_API_KEY="[CONFIGURED]"
+GOOGLE_API_KEY="[CONFIGURED]"
 ```
 
 4. **Initialize database**
